@@ -1,0 +1,53 @@
+# Déploiement WebIntel : application + base PostgreSQL.
+#
+# Démarrage :
+#   POSTGRES_PASSWORD=<mot-de-passe-fort> SECRET_KEY=<cle-secrete-forte> \
+#       docker compose up --build -d
+#
+# La variable POSTGRES_PASSWORD est OBLIGATOIRE (pas de valeur par défaut :
+# aucun mot de passe ne doit être codé en dur dans ce fichier).
+
+services:
+  # Base de données PostgreSQL 16 (données persistées dans le volume pgdata).
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: webintel
+      POSTGRES_USER: webintel
+      # Mot de passe fourni par l'environnement de la machine hôte.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Définissez POSTGRES_PASSWORD avant de démarrer}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webintel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Application WebIntel (FastAPI + uvicorn sur le port 8000).
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Connexion à la base (mot de passe injecté, jamais en clair ici).
+      DATABASE_URL: postgresql+psycopg://webintel:${POSTGRES_PASSWORD}@db:5432/webintel
+      # À définir impérativement en production :
+      SECRET_KEY: ${SECRET_KEY:?Définissez SECRET_KEY avant de démarrer}
+      REQUIRE_API_KEY: "true"
+      ENABLE_SCHEDULER: "true"
+      # Dossier des exports : volume persistant (sinon les fichiers sont
+      # perdus à chaque redémarrage du conteneur).
+      EXPORT_DIR: /app/webintel_data/exports
+      LOG_LEVEL: INFO
+    volumes:
+      - webintel_data:/app/webintel_data
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  webintel_data:

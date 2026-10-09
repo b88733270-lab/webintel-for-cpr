@@ -1,0 +1,4 @@
+nom_scientifique;famille;genre;espece;noms_vernaculaires;synonymes;description;distribution;parties_utilisees;ids_externes
+Moringa oleifera;Moringaceae;Moringa;oleifera;"fr=Moringa;en=Drumstick tree";Moringa pterygosperma;Arbre tropical aux feuilles très nutritives, utilisées en médecine traditionnelle.;Afrique subsaharienne, Inde;"feuilles;graines";{"gbif": "3190532"}
+Artemisia annua;Asteraceae;Artemisia;annua;"fr=Armoise annuelle;en=Sweet wormwood";Artemisia chamomilla;Plante source de l'artémisinine, antipaludique majeur.;Asie tempérée, cultivée en Afrique;feuilles;{"gbif": "3120649"}
+Hibiscus sabdariffa;Malvaceae;Hibiscus;sabdariffa;"fr=Bissap;en=Roselle";Hibiscus acetosella;Calices utilisés en infusion, traditionnellement pour la tension artérielle.;Afrique de l'Ouest, Asie tropicale;calices;{"gbif": "3152703"}
