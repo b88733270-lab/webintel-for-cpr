@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Docking moléculaire{% endblock %}
+{% block content %}
+<h1>Docking moléculaire</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — workflow en
+9 étapes (récepteur → validation → ligand → préparation → paramètres →
+calcul → poses → scores → rapport) via le moteur de docking.</p>
+
+{% if moteur_disponible %}
+<p><span class="badge" style="background-color:#1a7f37;color:#fff;border:none;">Moteur disponible</span></p>
+{% else %}
+<p><span class="badge" style="background-color:#cf222e;color:#fff;border:none;">Moteur indisponible</span>
+<span class="muted">{{ moteur_raison }}</span></p>
+{% endif %}
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+{% if apercu %}
+<div class="card" style="border:2px solid #8250df;">
+  <h2>Aperçu du workflow — aucun calcul lancé, aucun score produit</h2>
+  <p>{{ apercu.message }}</p>
+  <ol>
+    {% for e in apercu.etapes %}
+    <li><strong>{{ e.etape }}</strong> — {{ e.description }}</li>
+    {% endfor %}
+  </ol>
+  <p class="muted">Paramètres validés :
+  centre {{ apercu.parametres.centre_boite }},
+  boîte {{ apercu.parametres.taille_boite }} Å,
+  exhaustivité {{ apercu.parametres.exhaustiveness }},
+  poses {{ apercu.parametres.nb_poses }}.</p>
+</div>
+{% endif %}
+
+<h2>Nouveau docking</h2>
+{% if moteur_disponible %}
+<form method="post" action="/docking">
+  <p><label>Nom du job<br>
+    <input type="text" name="nom" value="{{ form.nom or '' }}" size="60"></label></p>
+  <p><label>Récepteur — nom (optionnel)<br>
+    <input type="text" name="recepteur_nom" value="{{ form.recepteur_nom or '' }}" size="40"></label></p>
+  <p><label>Récepteur — contenu PDBQT préparé (obligatoire pour l'exécution)<br>
+    <textarea name="recepteur_pdb" rows="8" cols="70" placeholder="Collez ici le récepteur préparé au format PDBQT (ADFR / AutoDockTools / OpenBabel)">{{ form.recepteur_pdb or '' }}</textarea><br>
+    <small>Le récepteur doit être préparé au format PDBQT avec un outil externe — WebIntel ne convertit pas PDB → PDBQT. L'aperçu accepte un PDB simple, l'exécution exige le PDBQT.</small></label></p>
+  <p><label>Ligand — nom (optionnel)<br>
+    <input type="text" name="ligand_nom" value="{{ form.ligand_nom or '' }}" size="40"></label></p>
+  <p><label>Ligand — SMILES<br>
+    <input type="text" name="ligand_smiles" value="{{ form.ligand_smiles or '' }}" size="60"
+           placeholder="Ex. CCO"></label></p>
+  <p>
+    <label>Centre de boîte (Å)
+      <input type="number" step="0.1" name="cx" value="{{ form.cx or 0 }}" size="6">
+      <input type="number" step="0.1" name="cy" value="{{ form.cy or 0 }}" size="6">
+      <input type="number" step="0.1" name="cz" value="{{ form.cz or 0 }}" size="6"></label>
+    <label>Taille (Å, 5–60)
+      <input type="number" step="0.5" name="taille" value="{{ form.taille or 20 }}" size="6"></label>
+    <label>Exhaustivité (1–32)
+      <input type="number" name="exhaustiveness" value="{{ form.exhaustiveness or 8 }}" size="4"></label>
+    <label>Poses (1–20)
+      <input type="number" name="nb_poses" value="{{ form.nb_poses or 9 }}" size="4"></label>
+  </p>
+  <p>
+    <button type="submit" name="action" value="apercu">Aperçu (sans calcul)</button>
+    <button type="submit" name="action" value="executer">Exécuter le docking</button>
+  </p>
+</form>
+{% else %}
+<div class="card" style="border:2px solid #cf222e;">
+  <h3>Calcul impossible — moteur de docking non installé</h3>
+  <p>Aucun formulaire de calcul n'est affiché tant que le moteur\n  (AutoDock Vina) n'est pas installé : WebIntel ne simule ni n'invente\n  jamais de score. {{ moteur_raison }}</p>
+  <p><a class="btn" href="/outils-scientifiques">Installer les outils scientifiques</a></p>
+</div>
+{% endif %}
+
+<h2>Jobs ({{ jobs|length }})</h2>
+{% if jobs %}
+<table>
+  <tr><th>Nom</th><th>Statut</th><th>Moteur</th><th></th></tr>
+  {% for j in jobs %}
+  <tr>
+    <td><a href="/docking/{{ j.id }}">{{ j.nom }}</a></td>
+    <td>{{ j.statut }}</td>
+    <td>{{ j.moteur or "—" }}</td>
+    <td><a href="/docking/{{ j.id }}">Détail</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="muted">Aucun job de docking pour ce projet.</p>
+{% endif %}
+
+<p><a href="/combinaisons">← Retour aux combinaisons</a></p>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Job docking {{ job.nom }}{% endblock %}
+
+{% macro rendre(v) -%}
+{% if v is none %}<em class="muted">—</em>
+{% elif v is mapping %}
+<dl class="kv">
+{% for k, val in v.items() %}<dt>{{ k }}</dt><dd>{{ rendre(val) }}</dd>{% endfor %}
+</dl>
+{% elif v is sequence and v is not string %}
+<ul>{% for elt in v %}<li>{{ rendre(elt) }}</li>{% endfor %}</ul>
+{% else %}{{ v }}{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<h1>Job de docking — {{ job.nom }}</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> ·
+Statut : <strong>{{ job.statut }}</strong> ·
+<span class="badge" style="background-color:#8250df;color:#fff;border:none;">Prédiction — à confirmer expérimentalement</span></p>
+{% if job.statut == "refuse" %}
+<p class="alert-error">Calcul refusé : le moteur était indisponible ou a
+refusé l'exécution. Aucun score produit — aucune valeur inventée.</p>
+{% endif %}
+
+<div class="card">
+  <h2>Entrées</h2>
+  {{ rendre({"recepteur_nom": job.recepteur_nom,
+             "recepteur_hash_sha256": job.recepteur_hash,
+             "ligand_nom": job.ligand_nom,
+             "ligand_smiles": job.ligand_smiles,
+             "empreinte_entrees": job.inputs_hash}) }}
+  <h2>Paramètres</h2>
+  {{ rendre(job.parametres) }}
+  <h2>Méthode</h2>
+  <p>{{ job.methode }}</p>
+  <p class="muted">Moteur : {{ job.moteur or "—" }}
+  {% if job.moteur_version %}v{{ job.moteur_version }}{% endif %}</p>
+  <h2>Résultats</h2>
+  {{ rendre(job.resultats) }}
+</div>
+
+<h2>Provenance</h2>
+<div class="card">{{ rendre(job.provenance) }}</div>
+
+<p><a href="/docking">← Retour au docking</a></p>
+{% endblock %}

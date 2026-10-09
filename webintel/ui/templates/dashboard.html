@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord{% endblock %}
+{% block content %}
+<div class="card" style="background: var(--accent-soft); border-color: var(--accent);">
+  <p style="margin: 0;"><strong>WebIntel — plateforme d'intelligence scientifique</strong>
+  pour les plantes médicinales, la pharmacognosie et les produits naturels.
+  Le crawl et l'extraction web sont une source de données parmi d'autres :
+  chaque donnée est tracée jusqu'à sa source et étiquetée selon son niveau
+  de preuve (publié, normalisé, hypothèse, prédiction, expérimental).
+  <a href="/docs">Documentation API</a></p>
+</div>
+<h1>Tableau de bord</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — indicateurs calculés en temps réel.</p>
+
+{# ---------- Parcours chercheur (v2.1) : la recherche d'abord ---------- #}
+<div class="card" id="recherche" style="border:2px solid var(--accent);">
+  <h2>🔬 Mon travail de chercheur</h2>
+  <form class="inline" method="get" action="/recherche-science">
+    <div class="field"><label for="q-plante">Rechercher une plante</label>
+      <input type="search" id="q-plante" name="q" placeholder="ex. Moringa oleifera, Artemisia…" size="45"></div>
+    <button type="submit">Rechercher</button>
+  </form>
+  <p class="muted" style="margin-top:12px;">Parcours type : recherche → fiche plante → étude / simulation → rapport → export.</p>
+  <p>
+    <a href="#recherche" class="button">＋ Nouvelle recherche</a>
+    <a href="/workflows#nouveau" class="button">＋ Nouvelle étude</a>
+    <a href="/simulations#nouveau" class="button">＋ Nouvelle simulation</a>
+    <a href="/import" class="button">⭳ Importer mes résultats</a>
+    <a href="/export" class="button">⭱ Exporter mon dossier</a>
+  </p>
+</div>
+
+<div class="grid">
+  <div class="card kpi"><div class="label">Pages surveillées</div><div class="value">{{ kpis.pages_surveillees }}</div></div>
+  <div class="card kpi"><div class="label">Changements aujourd'hui</div><div class="value">{{ kpis.changements_aujourdhui }}</div></div>
+  <div class="card kpi"><div class="label">Produits détectés</div><div class="value">{{ kpis.produits_detectes }}</div></div>
+  <div class="card kpi"><div class="label">Changements de prix (7 j)</div><div class="value">{{ kpis.changements_prix_7j }}</div></div>
+  <div class="card kpi"><div class="label">Erreurs (24 h)</div><div class="value">{{ kpis.erreurs_24h }}</div></div>
+  <div class="card kpi"><div class="label">Nouvelles entités (7 j)</div><div class="value">{{ kpis.nouvelles_entites_7j }}</div></div>
+  <div class="card kpi"><div class="label">Alertes</div><div class="value">{{ kpis.alertes }}</div></div>
+  <div class="card kpi"><div class="label">Temps moyen de crawl</div><div class="value">{% if kpis.temps_moyen_crawl_s is not none %}{{ kpis.temps_moyen_crawl_s }} s{% else %}—{% endif %}</div></div>
+</div>
+
+<div class="card">
+  <h2>Démarrage rapide</h2>
+  <p>Collez une URL pour obtenir sa fiche intelligence complète :</p>
+  <form class="inline" method="post" action="/analyser">
+    <div class="field"><label for="url">URL à analyser</label>
+      <input type="url" id="url" name="url" placeholder="https://exemple.fr/produit" size="50" required></div>
+    <button type="submit">Analyser</button>
+  </form>
+  <details>
+    <summary>Que fait l'analyse ?</summary>
+    <p class="muted">Validation de sécurité (anti-SSRF), récupération HTTP, extraction des données
+    structurées, classification du type de page, extraction sémantique (produit, article, entreprise),
+    détection des technologies, audit SEO, score de santé, sauvegarde d'un snapshot horodaté et,
+    en cas de ré-analyse, calcul du diff et génération d'événements.</p>
+  </details>
+</div>
+{% endblock %}

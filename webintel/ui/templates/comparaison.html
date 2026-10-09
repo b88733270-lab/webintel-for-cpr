@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Comparaison{% endblock %}
+{% block content %}
+<h1>⚖️ Comparaison</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — comparez deux entités : seules les valeurs réellement observées sont affichées, chacune reliée à sa source.</p>
+
+<div class="card">
+  <form class="inline" method="get" action="/comparaison">
+    <div class="field"><label for="entite_a">Entité A</label>
+      <select id="entite_a" name="entite_a">
+        <option value="">— Choisir —</option>
+        {% for e in entites %}<option value="{{ e.id }}" {% if id_a == e.id %}selected{% endif %}>{{ e.name }} ({{ e.entity_type }})</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="entite_b">Entité B</label>
+      <select id="entite_b" name="entite_b">
+        <option value="">— Choisir —</option>
+        {% for e in entites %}<option value="{{ e.id }}" {% if id_b == e.id %}selected{% endif %}>{{ e.name }} ({{ e.entity_type }})</option>{% endfor %}
+      </select></div>
+    <button type="submit">Comparer</button>
+  </form>
+</div>
+
+{% if entite_a and entite_b %}
+<div class="grid">
+  {% for carte, titre in [(entite_a, "Entité A"), (entite_b, "Entité B")] %}
+  <div class="card">
+    <h2>{{ titre }} — {{ carte.nom }}</h2>
+    <p><span class="badge">{{ carte.type }}</span></p>
+    <p class="muted">Première vue : {{ carte.premiere_vue|date_courte }}<br>Dernière vue : {{ carte.derniere_vue|date_courte }}</p>
+    <h3>Champs observés</h3>
+    {% if carte.donnees %}
+    <table class="responsive-cards">
+      <tbody>
+      {% for champ, valeur in carte.donnees.items() %}
+        <tr><td data-label="Champ">{{ champ }}</td><td data-label="Valeur">{{ valeur|afficher_valeur }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="muted">Aucun champ observé.</p>{% endif %}
+    <h3>Observations par source</h3>
+    {% if carte.par_source %}
+      {% for domaine, obs in carte.par_source.items() %}
+      <p><strong>{{ domaine }}</strong></p>
+      <ul>
+        {% for o in obs %}<li>{{ o.champ }} : {{ o.valeur|afficher_valeur }} <span class="muted">({{ o.observe_le|date_courte }})</span></li>{% endfor %}
+      </ul>
+      {% endfor %}
+    {% else %}<p class="muted">Aucune observation par source.</p>{% endif %}
+    <h3>URLs sources</h3>
+    {% if carte.sources %}
+    <ul>{% for u in carte.sources %}<li><a href="{{ u }}" rel="noopener noreferrer" target="_blank">{{ u }}</a></li>{% endfor %}</ul>
+    {% else %}<p class="muted">Aucune URL source.</p>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+<div class="card">
+  <h2>Synthèse de la comparaison</h2>
+  <p>Champs communs : {{ champs_communs | join(", ") if champs_communs else "aucun" }}.<br>
+  Champs propres à A : {{ champs_a_seuls | join(", ") if champs_a_seuls else "aucun" }}.<br>
+  Champs propres à B : {{ champs_b_seuls | join(", ") if champs_b_seuls else "aucun" }}.</p>
+  <p class="muted">Synthèse factuelle uniquement : aucune inférence n'est ajoutée aux valeurs observées.</p>
+</div>
+{% elif entites %}
+<div class="empty-state"><p>Choisissez deux entités ci-dessus pour les comparer.</p></div>
+{% else %}
+<div class="empty-state">
+  <p>Aucune entité dans ce projet pour le moment.</p>
+  <p class="muted"><a href="/analyser">Analysez une URL</a> pour créer vos premières entités comparables.</p>
+</div>
+{% endif %}
+{% endblock %}

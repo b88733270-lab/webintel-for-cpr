@@ -1,0 +1,19 @@
+{# Barre de recherche intelligente globale (partiel, inclus dans accueil.html).
+   Formulaire HTML simple (GET) — aucun champ JSON, aucune donnée technique. #}
+<form method="get" action="/recherche-universelle" class="recherche-globale" role="search">
+  <label for="q-globale" class="muted">Recherche globale</label>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+    <input id="q-globale" type="search" name="q" size="48"
+           placeholder="Rechercher une plante, molécule, publication ou étude…"
+           value="{{ q|default('', true)|e }}" aria-label="Rechercher">
+    <select name="type" aria-label="Type de recherche">
+      <option value="tout" {% if type_demande|default('tout', true) == 'tout' %}selected{% endif %}>Tout</option>
+      <option value="plante" {% if type_demande|default('', true) == 'plante' %}selected{% endif %}>Plante</option>
+      <option value="compose" {% if type_demande|default('', true) == 'compose' %}selected{% endif %}>Molécule</option>
+      <option value="publication" {% if type_demande|default('', true) == 'publication' %}selected{% endif %}>Publication</option>
+      <option value="simulation" {% if type_demande|default('', true) == 'simulation' %}selected{% endif %}>Étude / simulation</option>
+    </select>
+    <button type="submit">Rechercher</button>
+  </div>
+  <p class="muted" style="margin-top:0.4rem;">Chaque résultat affiche son niveau de données et sa source.</p>
+</form>

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle étude de combinaison{% endblock %}
+{% block content %}
+<h1>Nouvelle étude de combinaison</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — MODE A :
+screening structural. Sélectionnez au moins 2 composés. Aucune mesure de
+synergie ne sera calculée : ce dossier produit un score de comparaison
+informatique et des hypothèses, jamais une valeur de synergie.</p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<form method="post" action="/combinaisons/creer">
+  <p><label>Nom de l'étude<br>
+    <input type="text" name="nom" value="{{ form.nom or '' }}" size="60"
+           placeholder="Ex. Quercétine + Lutéoline"></label></p>
+
+  <h2>Composés (au moins 2)</h2>
+  {% if composes %}
+  {% for c in composes %}
+  <label><input type="checkbox" name="compound_ids" value="{{ c.id }}">
+    {{ c.name }}{% if c.formula %} ({{ c.formula }}){% endif %}</label><br>
+  {% endfor %}
+  {% else %}
+  <p class="alert-error">Aucun composé en base :
+  <a href="/recherche-science">ajoutez d'abord des composés</a>.</p>
+  {% endif %}
+
+  <h2>Contexte (optionnel)</h2>
+  <p><label>Plante associée<br>
+    <select name="plant_id">
+      <option value="">— aucune —</option>
+      {% for p in plantes %}
+      <option value="{{ p.id }}">{{ p.scientific_name }}</option>
+      {% endfor %}
+    </select></label></p>
+  <p><label>Partie de plante<br>
+    <input type="text" name="plant_part" size="40"
+           placeholder="Ex. feuilles"></label></p>
+  <p><label>Cible visée (documentaire)<br>
+    <input type="text" name="target" size="40"
+           placeholder="Ex. COX-2"></label></p>
+  <p><label>Description<br>
+    <textarea name="description" rows="3" cols="60"></textarea></label></p>
+
+  <p><button type="submit">Créer l'étude</button>
+     <a href="/combinaisons">Annuler</a></p>
+</form>
+{% endblock %}

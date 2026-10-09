@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Analyser une URL{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Analyser une URL</h1>
+  <p class="muted">Projet : <strong>{{ project.name }}</strong> — collez une adresse
+  publique : WebIntel collecte la page, extrait ses entités et conserve un
+  instantané daté et sourcé.</p>
+</div>
+
+{% if error %}
+<div class="alert-error" role="alert">{{ error }}
+  <p style="margin:.5rem 0 0;"><a class="btn btn-sm secondary" href="/analyser">Réessayer</a></p>
+</div>
+{% endif %}
+
+<div class="offline-banner" id="analyser-offline" role="status" hidden>
+  <span aria-hidden="true">⚠️</span>
+  <p style="margin:0;"><strong>Connexion indisponible.</strong> L'analyse d'URL
+  nécessite le réseau et n'est pas disponible hors-ligne. Vos données déjà
+  collectées restent consultables.</p>
+</div>
+
+<div class="card">
+  <form class="inline" method="post" action="/analyser" data-needs-network-form>
+    <div class="field" style="flex:1 1 320px;"><label for="url">URL à analyser</label>
+      <input type="url" id="url" name="url" value="{{ url }}" placeholder="https://exemple.fr/produit" required></div>
+    <button type="submit" data-needs-network>Analyser</button>
+  </form>
+  <p class="muted">Seules les URLs http/https publiques sont acceptées (protection anti-SSRF :
+  intranet, localhost et adresses IP privées sont refusés). L'analyse comprend :
+  validation, collecte HTTP, extraction des données structurées, classification,
+  détection des technologies et sauvegarde d'un instantané horodaté.</p>
+  <div class="empty-state" style="margin-top:1rem;">
+    <div class="empty-ico" aria-hidden="true">🔗</div>
+    <h3>En attente d'une URL</h3>
+    <p class="muted">Aucun résultat n'est affiché sans analyse réelle. Après
+    envoi, la fiche d'intelligence de la page remplace cet écran.</p>
+  </div>
+</div>
+{% endblock %}

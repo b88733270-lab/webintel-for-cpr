@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Crawl n° {{ state.id }}{% endblock %}
+{% block content %}
+{% if running %}<meta http-equiv="refresh" content="3">{% endif %}
+<h1>Crawl n° {{ state.id }}</h1>
+<p><a href="/crawls">← Retour aux crawls</a></p>
+
+<div class="card">
+  <dl class="kv">
+    <dt>Type</dt><dd>{{ state.kind }}</dd>
+    <dt>Statut</dt><dd><span class="badge {{ job_badge(state.status) }}">{{ state.status }}</span></dd>
+    <dt>Pages visitées</dt><dd>{{ progress.visited or 0 }}</dd>
+    <dt>Pages découvertes</dt><dd>{{ progress.discovered or 0 }}</dd>
+    <dt>Erreurs</dt><dd>{{ progress.errors or 0 }}</dd>
+    <dt>Octets</dt><dd>{{ progress.bytes or 0 }}</dd>
+    <dt>Temps écoulé</dt><dd>{{ progress.elapsed_s or 0 }} s</dd>
+    {% if state.error %}<dt>Erreur</dt><dd class="alert-error">{{ state.error }}</dd>{% endif %}
+  </dl>
+  {% if running %}
+  <div class="progress"><div style="width: {{ pct }}%"></div></div>
+  <p class="muted">Actualisation automatique toutes les 3 secondes… ({{ pct }} %)</p>
+  {% endif %}
+</div>
+
+{% if progress.urls %}
+<div class="card">
+  <h2>Dernières URLs visitées</h2>
+  <ul>{% for u in progress.urls[-20:] %}<li class="muted">{{ u | truncate(100) }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% endblock %}

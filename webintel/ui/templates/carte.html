@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Carte des collectes{% endblock %}
+{% block content %}
+<h1>🗺 Carte des collectes</h1>
+<p class="muted">Carte <strong>100 % locale</strong> : aucun appel réseau, aucune tuile externe —
+fond schématique simplifié (tracé non officiel). {{ nb_points }} site(s) positionné(s).
+Le GPS des données <em>restreintes</em> est flouté et celui des données
+<em>confidentielles</em> est masqué pour les non-auteurs.</p>
+<p>
+  <a class="badge {% if vue != 'visiteur' %}ok{% else %}muted{% endif %}" href="/carte?vue=auteur" style="text-decoration:none;">👁 Vue auteur</a>
+  <a class="badge {% if vue == 'visiteur' %}ok{% else %}muted{% endif %}" href="/carte?vue=visiteur" style="text-decoration:none;">👥 Vue visiteur (démontre la protection)</a>
+  <span class="muted">Connecté en tant que : {{ demandeur }}</span>
+</p>
+
+<div class="card">
+  {{ svg|safe }}
+  <p class="muted">
+    <span style="color:#1f7a3a;">●</span> collecte publique
+    <span style="color:#c77414;">●</span> collecte restreinte (floutée hors auteur)
+    <span style="color:#b3261e;">◌</span> collecte confidentielle (masquée hors auteur — point au centroïde)
+    <span style="color:#1d4ed8;">●</span> échantillon du projet
+  </p>
+</div>
+
+<div class="card">
+  <h2>Sites (collectes + échantillons du projet)</h2>
+  <table>
+    <thead><tr><th>Type</th><th>ID</th><th>Nom / code</th><th>Lieu</th><th>GPS affiché</th><th>Confidentialité</th></tr></thead>
+    <tbody>
+    {% for l in lignes %}
+    <tr>
+      <td>{{ l.type }}</td>
+      <td>{% if l.type == "Collecte" %}<a href="/collectes/{{ l.id }}">{{ l.id }}</a>{% else %}{{ l.id }}{% endif %}</td>
+      <td>{{ l.nom }}</td>
+      <td>{{ l.lieu }}</td>
+      <td>
+        {% if l.gps.statut == "exact" %}{{ "%.4f"|format(l.gps.lat) }}, {{ "%.4f"|format(l.gps.lon) }}
+        {% elif l.gps.statut == "floute" %}≈ {{ "%.1f"|format(l.gps.lat) }}, {{ "%.1f"|format(l.gps.lon) }} <span class="badge warn">flouté</span>
+        {% elif l.gps.statut == "masque" %}<span class="badge bad">masqué</span>
+        {% else %}—{% endif %}
+      </td>
+      <td>{{ l.conf }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

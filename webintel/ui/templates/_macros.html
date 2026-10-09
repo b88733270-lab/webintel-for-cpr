@@ -1,0 +1,43 @@
+{# Macros partagées des pages scientifiques (Phases 7/8 : Workflows, Laboratoire).
+   Couleurs des niveaux de données : voir webintel/ui/static/style.css
+   (badge-publie vert, badge-normalise bleu, badge-hypothese ambre,
+   badge-prediction violet, badge-experimental rouge). #}
+
+{# Pastille de niveau de donnée scientifique. #}
+{% macro badge_niveau(niveau) -%}
+{% set classes = {
+  "publie": "badge-publie",
+  "normalise": "badge-normalise",
+  "hypothese": "badge-hypothese",
+  "prediction": "badge-prediction",
+  "experimental": "badge-experimental" } %}
+{% set labels = {
+  "publie": "Publié",
+  "normalise": "Normalisé",
+  "hypothese": "Hypothèse",
+  "prediction": "Prédiction",
+  "experimental": "Expérimental" } %}
+{% if niveau %}<span class="badge {{ classes.get(niveau, "muted") }}">{{ labels.get(niveau, niveau) }}</span>{% endif %}
+{%- endmacro %}
+
+{# Pastille de statut d'étape de workflow. #}
+{% macro pill_etape(statut_cle, label) -%}
+{% set classes = {
+  "en_attente": "muted",
+  "en_cours": "",
+  "terminee": "ok",
+  "echouee": "bad" } %}
+<span class="badge {{ classes.get(statut_cle, "muted") }}">{{ label }}</span>
+{%- endmacro %}
+
+{# Rendu générique d'une valeur (rapport, sortie d'étape...). #}
+{% macro rendre(v) -%}
+{% if v is none %}<em class="muted">—</em>
+{% elif v is mapping %}
+<dl class="kv">
+{% for k, val in v.items() %}<dt>{{ k }}</dt><dd>{{ rendre(val) }}</dd>{% endfor %}
+</dl>
+{% elif v is sequence and v is not string %}
+<ul>{% for elt in v %}<li>{{ rendre(elt) }}</li>{% endfor %}</ul>
+{% else %}{{ v }}{% endif %}
+{%- endmacro %}

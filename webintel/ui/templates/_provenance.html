@@ -1,0 +1,52 @@
+{# Partiel : fiche de traçabilité d'un résultat.
+   ------------------------------------------------------------------
+   Contexte requis : `fiche` (dict) avec les clés :
+     titre, type_label, type, id, retour_url, provenance_url,
+     source, entree (donnée d'entrée), methode, moteur, version_moteur,
+     parametres (dict|None), date, resultat,
+     niveau ("prediction"|None), niveau_label, prudence (texte|None).
+
+   Affiche les 7 champs exigés : source, donnée d'entrée, méthode,
+   version du moteur, paramètres, date, résultat — plus le niveau de
+   preuve. Formulations prudentes uniquement.
+
+   INTÉGRATION (coordinateur) : sur chaque page de résultats
+   (fiche plante, détail combinaison, détail docking, rapport de
+   simulation…), ajouter à côté du résultat :
+     <a class="btn secondary" href="{{ fiche.provenance_url }}">[Voir la provenance]</a>
+   ou, quand le contexte `fiche` n'existe pas encore sur la page :
+     <a class="btn secondary" href="/resultats/{type}/{id}/provenance">[Voir la provenance]</a>
+   ------------------------------------------------------------------ #}
+<div class="card" style="border-left:4px solid #8250df;">
+  <h2>🔍 Provenance — {{ fiche.titre }}</h2>
+  <p>
+    <span class="badge">{{ fiche.niveau_label }}</span>
+    <span class="muted">{{ fiche.type_label }}</span>
+  </p>
+  <table>
+    <tr><th style="width:11rem;">Source</th><td>{{ fiche.source }}</td></tr>
+    <tr><th>Donnée d'entrée</th><td>{{ fiche.entree }}</td></tr>
+    <tr><th>Méthode</th><td>{{ fiche.methode }}</td></tr>
+    <tr><th>Version du moteur</th><td>{{ fiche.moteur }} — {{ fiche.version_moteur }}</td></tr>
+    <tr><th>Paramètres</th><td>
+      {% if fiche.parametres %}
+        <ul>
+        {% for cle, valeur in fiche.parametres.items() %}
+          <li><code>{{ cle }}</code> : {{ valeur }}</li>
+        {% endfor %}
+        </ul>
+      {% else %}
+        <span class="muted">Non renseignés</span>
+      {% endif %}
+    </td></tr>
+    <tr><th>Date</th><td>{{ fiche.date }}</td></tr>
+    <tr><th>Résultat</th><td>{{ fiche.resultat }}</td></tr>
+  </table>
+  {% if fiche.prudence %}
+  <p class="muted">⚠️ {{ fiche.prudence }}</p>
+  {% endif %}
+  <p>
+    {% if fiche.retour_url %}<a class="btn secondary" href="{{ fiche.retour_url }}">[Voir le résultat]</a>{% endif %}
+    <a class="btn secondary" href="{{ fiche.provenance_url }}">[Voir la provenance]</a>
+  </p>
+</div>

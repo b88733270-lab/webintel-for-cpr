@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Étude {{ etude.nom }}{% endblock %}
+
+{% macro rendre(v) -%}
+{% if v is none %}<em class="muted">—</em>
+{% elif v is mapping %}
+<dl class="kv">
+{% for k, val in v.items() %}<dt>{{ k }}</dt><dd>{{ rendre(val) }}</dd>{% endfor %}
+</dl>
+{% elif v is sequence and v is not string %}
+<ul>{% for elt in v %}<li>{{ rendre(elt) }}</li>{% endfor %}</ul>
+{% else %}{{ v }}{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<h1>Étude de combinaison — {{ etude.nom }}</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> ·
+Statut : <strong>{{ etude.statut }}</strong> ·
+<span class="badge" style="background-color:#8250df;color:#fff;border:none;">Prédiction — à confirmer expérimentalement</span></p>
+<p class="muted">Empreinte des entrées :
+<code>{{ etude.inputs_hash }}</code></p>
+<p class="alert-error"><strong>Résultat de screening informatique.</strong>
+Hypothèse à vérifier expérimentalement. Aucune valeur de synergie n'est
+calculée à partir de structures moléculaires.</p>
+
+<p><a href="/combinaisons">← Retour aux combinaisons</a></p>
+
+{% for section in sections %}
+<div class="card">
+  <h2>{{ section.titre }}</h2>
+  {% for cle, valeur in section.items() if cle != "titre" %}
+    {% if cle == "note" and valeur %}
+    <p class="muted">{{ valeur }}</p>
+    {% elif cle == "conclusion" and valeur %}
+    <p><strong>{{ valeur }}</strong></p>
+    {% elif cle not in ["note"] %}
+    <h3>{{ cle }}</h3>
+    {{ rendre(valeur) }}
+    {% endif %}
+  {% endfor %}
+</div>
+{% endfor %}
+
+<h2>Provenance</h2>
+<div class="card">{{ rendre(etude.provenance) }}</div>
+
+<p><a href="/rapport">Exporter mon dossier</a></p>
+{% endblock %}

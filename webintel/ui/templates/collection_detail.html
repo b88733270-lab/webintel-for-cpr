@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Collection — {{ collection.nom }}{% endblock %}
+{% block content %}
+<h1>{% if collection.icone %}{{ collection.icone }} {% endif %}{{ collection.nom }}</h1>
+<p><a href="/collections">← Retour aux collections et favoris</a></p>
+<p class="muted">Projet : <strong>{{ project.name }}</strong></p>
+
+{% if message %}<div class="alert-ok">{{ message }}</div>{% endif %}
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<div class="card">
+  <h2>À propos de cette collection</h2>
+  <dl class="kv">
+    <dt>Description</dt><dd>{{ collection.description or "—" }}</dd>
+    <dt>Couleur</dt><dd>{{ collection.couleur or "—" }}</dd>
+    <dt>Créée le</dt><dd>{{ collection.created_at|date_courte }}</dd>
+    <dt>Mise à jour le</dt><dd>{{ collection.updated_at|date_courte }}</dd>
+  </dl>
+  <h3>Renommer / modifier</h3>
+  <form class="inline" method="post" action="/collections/{{ collection.id }}/renommer">
+    <div class="field"><label for="nom">Nom *</label>
+      <input type="text" id="nom" name="nom" required value="{{ collection.nom }}"></div>
+    <div class="field"><label for="description">Description</label>
+      <input type="text" id="description" name="description" value="{{ collection.description or '' }}"></div>
+    <div class="field"><label for="couleur">Couleur</label>
+      <input type="text" id="couleur" name="couleur" value="{{ collection.couleur or '' }}"></div>
+    <div class="field"><label for="icone">Icône</label>
+      <input type="text" id="icone" name="icone" value="{{ collection.icone or '' }}"></div>
+    <button type="submit">Enregistrer</button>
+  </form>
+  <h3>Supprimer cette collection</h3>
+  <p class="muted">La collection sera supprimée, mais ses favoris seront <strong>conservés hors collection</strong> : aucune donnée n'est perdue.</p>
+  <form method="post" action="/collections/{{ collection.id }}/supprimer">
+    <button type="submit" class="danger">Supprimer la collection (les favoris sont conservés)</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Ajouter un élément à cette collection</h2>
+  <form class="inline" method="post" action="/collections/favoris/ajouter">
+    <input type="hidden" name="collection_id" value="{{ collection.id }}">
+    <div class="field"><label for="titre">Titre *</label>
+      <input type="text" id="titre" name="titre" required></div>
+    <div class="field"><label for="type_objet">Type *</label>
+      <select id="type_objet" name="type_objet">
+        {% for valeur, libelle in types_favori.items() %}<option value="{{ valeur }}">{{ libelle }}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="reference">Référence (identifiant ou URL) *</label>
+      <input type="text" id="reference" name="reference" required></div>
+    <div class="field"><label for="note">Note</label>
+      <input type="text" id="note" name="note"></div>
+    <button type="submit">Ajouter à la collection</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Éléments ({{ favoris | length }})</h2>
+  {% if favoris %}
+  <table><tr><th>Titre</th><th>Type</th><th>Référence</th><th>Note</th><th>Ajouté le</th><th>Déplacer vers</th><th></th></tr>
+    {% for item in favoris %}
+    {% set f = item.favori %}
+    <tr>
+      <td>{% if item.lien %}<a href="{{ item.lien }}">{{ f.titre }}</a>{% else %}{{ f.titre }}{% endif %}</td>
+      <td><span class="badge muted">{{ item.libelle_type }}</span></td>
+      <td class="muted">{{ f.reference | truncate(60) }}</td>
+      <td class="muted">{{ f.note or "—" }}</td>
+      <td class="muted">{{ f.created_at|date_courte }}</td>
+      <td>
+        <form class="inline" method="post" action="/collections/favoris/{{ f.id }}/deplacer">
+          <select name="collection_id">
+            <option value="">Hors collection</option>
+            {% for c in autres_collections %}<option value="{{ c.id }}">{{ c.nom }}</option>{% endfor %}
+          </select>
+          <button type="submit">Déplacer</button>
+        </form>
+      </td>
+      <td>
+        <form method="post" action="/collections/favoris/{{ f.id }}/retirer">
+          <button type="submit" class="danger">Retirer</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Cette collection est vide pour le moment.</p>{% endif %}
+</div>
+{% endblock %}

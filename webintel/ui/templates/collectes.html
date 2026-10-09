@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Collectes de terrain{% endblock %}
+{% block content %}
+<h1>🌿 Collectes de terrain</h1>
+{% if bandeau %}<div class="card" style="border-left:4px solid var(--warn);"><p>⚠️ {{ bandeau }}</p></div>{% endif %}
+{% if message %}<div class="card" style="border-left:4px solid var(--ok);"><p>{{ message }}</p></div>{% endif %}
+{% if erreur %}<div class="card" style="border-left:4px solid var(--bad);"><p>❌ {{ erreur }}</p></div>{% endif %}
+<p class="muted">Saisie <strong>hors connexion</strong> : photo, GPS, localité, notes, échantillon, voucher,
+partie utilisée. Chaque collecte est une <strong>observation de terrain</strong> (donnée d'observation
+locale — jamais confondue avec une donnée publiée). Le GPS des collectes
+<em>confidentielles</em> n'est visible que par leur auteur.</p>
+<p><a class="badge ok" href="/collectes/nouvelle" style="text-decoration:none;">+ Nouvelle collecte</a>
+<a class="badge muted" href="/carte" style="text-decoration:none;">🗺 Voir la carte</a></p>
+
+{% if not cartes %}
+<div class="card"><p class="muted">Aucune collecte pour le moment.</p></div>
+{% endif %}
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));">
+{% for c in cartes %}
+<div class="card">
+  <h2><a href="/collectes/{{ c.collecte.id }}">Collecte #{{ c.collecte.id }}</a>
+    <span class="badge {{ c.classe }}">{{ c.badge }}</span></h2>
+  <div class="kv">
+    <span class="muted">Plante</span><span>{{ c.nom_plante }}</span>
+    <span class="muted">Localité</span><span>{{ c.collecte.localite or "—" }}</span>
+    <span class="muted">GPS</span><span>
+      {% if c.gps.statut == "exact" %}📍 {{ "%.4f"|format(c.gps.lat) }}, {{ "%.4f"|format(c.gps.lon) }}
+      {% elif c.gps.statut == "floute" %}📍 ~{{ "%.1f"|format(c.gps.lat) }}, {{ "%.1f"|format(c.gps.lon) }} <span class="badge warn">flouté</span>
+      {% elif c.gps.statut == "masque" %}<span class="badge bad">GPS masqué (confidentiel)</span>
+      {% else %}—{% endif %}
+    </span>
+    <span class="muted">Confidentialité</span><span>{{ libelles_confidentialite.get(c.collecte.niveau_confidentialite, c.collecte.niveau_confidentialite) }}</span>
+    <span class="muted">Échantillon</span><span>{{ c.collecte.echantillon_ref or "—" }}</span>
+    <span class="muted">Photos</span><span>{{ c.collecte.photos|length if c.collecte.photos else 0 }}</span>
+    <span class="muted">Auteur</span><span>{{ c.collecte.auteur or "—" }}</span>
+  </div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

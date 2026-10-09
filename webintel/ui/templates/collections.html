@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Favoris et collections{% endblock %}
+{% block content %}
+<h1>⭐ Favoris et collections</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — organisez vos entités, URLs analysées, rapports et recherches. Tout est conservé localement, dans ce projet uniquement.</p>
+
+{% if message %}<div class="alert-ok">{{ message }}</div>{% endif %}
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<div class="card">
+  <h2>Créer une collection</h2>
+  <form class="inline" method="post" action="/collections">
+    <div class="field"><label for="nom">Nom *</label>
+      <input type="text" id="nom" name="nom" required placeholder="Ex. Veille concurrentielle"></div>
+    <div class="field"><label for="description">Description</label>
+      <input type="text" id="description" name="description" placeholder="À quoi sert cette collection ?"></div>
+    <div class="field"><label for="couleur">Couleur</label>
+      <input type="text" id="couleur" name="couleur" placeholder="Ex. #0969da"></div>
+    <div class="field"><label for="icone">Icône</label>
+      <input type="text" id="icone" name="icone" placeholder="Ex. 📁"></div>
+    <button type="submit">Créer la collection</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Ajouter un favori</h2>
+  <form class="inline" method="post" action="/collections/favoris/ajouter">
+    <div class="field"><label for="titre">Titre *</label>
+      <input type="text" id="titre" name="titre" required placeholder="Titre affiché"></div>
+    <div class="field"><label for="type_objet">Type *</label>
+      <select id="type_objet" name="type_objet">
+        {% for valeur, libelle in types_favori.items() %}<option value="{{ valeur }}">{{ libelle }}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="reference">Référence (identifiant ou URL) *</label>
+      <input type="text" id="reference" name="reference" required placeholder="Ex. 42 ou https://exemple.com/page"></div>
+    <div class="field"><label for="collection_id">Collection</label>
+      <select id="collection_id" name="collection_id">
+        <option value="">Hors collection (favori seul)</option>
+        {% for c in collections %}<option value="{{ c.id }}">{{ c.nom }}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="note">Note</label>
+      <input type="text" id="note" name="note" placeholder="Note personnelle (optionnel)"></div>
+    <button type="submit">Ajouter aux favoris</button>
+  </form>
+  <p class="muted">Astuce : depuis la fiche d'une entité, le bouton « Ajouter aux favoris » remplit automatiquement le titre et la référence.</p>
+</div>
+
+<div class="card">
+  <h2>Mes collections ({{ collections | length }})</h2>
+  {% if collections %}
+  <div class="grid">
+    {% for c in collections %}
+    <div class="card">
+      <h3>{% if c.icone %}{{ c.icone }} {% endif %}<a href="/collections/{{ c.id }}">{{ c.nom }}</a></h3>
+      {% if c.description %}<p class="muted">{{ c.description }}</p>{% endif %}
+      <p><span class="badge muted">{{ compteurs[c.id] }} élément(s)</span>
+      {% if c.couleur %}<span class="badge" style="background-color:{{ c.couleur }};color:#fff;">{{ c.couleur }}</span>{% endif %}</p>
+      <p class="muted">Créée le {{ c.created_at|date_courte }}</p>
+      <p><a class="btn" href="/collections/{{ c.id }}">Ouvrir la collection</a></p>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}<p class="muted">Aucune collection pour le moment. Créez-en une ci-dessus.</p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>Favoris hors collection ({{ favoris | length }})</h2>
+  {% if favoris %}
+  <table><tr><th>Titre</th><th>Type</th><th>Référence</th><th>Note</th><th>Ajouté le</th><th>Déplacer vers</th><th></th></tr>
+    {% for item in favoris %}
+    {% set f = item.favori %}
+    <tr>
+      <td>{% if item.lien %}<a href="{{ item.lien }}">{{ f.titre }}</a>{% else %}{{ f.titre }}{% endif %}</td>
+      <td><span class="badge muted">{{ item.libelle_type }}</span></td>
+      <td class="muted">{{ f.reference | truncate(60) }}</td>
+      <td class="muted">{{ f.note or "—" }}</td>
+      <td class="muted">{{ f.created_at|date_courte }}</td>
+      <td>
+        <form class="inline" method="post" action="/collections/favoris/{{ f.id }}/deplacer">
+          <select name="collection_id">
+            <option value="">Hors collection</option>
+            {% for c in collections %}<option value="{{ c.id }}">{{ c.nom }}</option>{% endfor %}
+          </select>
+          <button type="submit">Déplacer</button>
+        </form>
+      </td>
+      <td>
+        <form method="post" action="/collections/favoris/{{ f.id }}/retirer">
+          <button type="submit" class="danger">Retirer</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Aucun favori hors collection. Ajoutez-en un avec le formulaire ci-dessus ou depuis une fiche entité.</p>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{# Partiel : statut du moteur de docking (AutoDock Vina).
+   ------------------------------------------------------------------
+   Contexte requis : `docking_statut` = {"disponible": bool,
+   "version": str|None, "binaire": str|None, "raison": str}.
+
+   Ce partiel n'affiche QUE le statut — il ne produit JAMAIS de score.
+
+   INTÉGRATION (coordinateur) : inclure en haut de `docking.html`
+   (`{% include "_docking_statut.html" %}` avec `docking_statut` dans le
+   contexte). Quand le moteur est indisponible, le formulaire de
+   lancement de `/docking` doit être DÉSACTIVÉ avec l'explication
+   ci-dessous (aucun formulaire actif, aucun score) ; quand il est
+   disponible, le bouton [Préparer l'étude] mène au formulaire.
+   ------------------------------------------------------------------ #}
+<div class="card" style="border-left:4px solid {% if docking_statut.disponible %}#1a7f37{% else %}#9a6700{% endif %};">
+  {% if docking_statut.disponible %}
+  <h3>🟢 Moteur de docking disponible</h3>
+  <p>
+    AutoDock Vina
+    <strong>{{ docking_statut.version or "version inconnue" }}</strong>
+    détecté{% if docking_statut.binaire %} (<code>{{ docking_statut.binaire }}</code>){% endif %}.
+    Le calcul de docking peut être lancé.
+  </p>
+  <p class="muted">
+    ⚠️ Un score de docking (affinité en kcal/mol) est une
+    <strong>prédiction informatique</strong>, pas une mesure d'activité
+    biologique. Il sert à classer des hypothèses, jamais à conclure.
+  </p>
+  <p>
+    <a class="btn" href="/docking">[Préparer l'étude]</a>
+    <span class="muted">Le récepteur doit être fourni au format PDBQT, préparé
+    avec un outil externe (ADFR / AutoDockTools / OpenBabel) — WebIntel ne
+    convertit pas PDB → PDBQT afin de ne jamais fausser un calcul.</span>
+  </p>
+  {% else %}
+  <h3>🟠 Le moteur de docking n'est pas installé.</h3>
+  {% if docking_statut.raison %}
+  <p class="muted">{{ docking_statut.raison }}</p>
+  {% endif %}
+  <p>
+    <strong>Aucun score ne peut être calculé.</strong>
+    Le formulaire de lancement est désactivé tant que le moteur n'est pas
+    installé — WebIntel n'invente jamais de résultat.
+  </p>
+  <p>
+    <a class="btn" href="/outils-scientifiques">[Installer les outils scientifiques]</a>
+  </p>
+  {% endif %}
+</div>

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle collecte{% endblock %}
+{% block content %}
+<h1>🌿 Nouvelle collecte de terrain</h1>
+<p class="muted">Fonctionne <strong>sans réseau</strong> : la saisie est enregistrée localement{% if hors_ligne %} et
+mise en file de synchronisation{% endif %}. Les champs marqués d'aucun astérisque sont tous optionnels —
+<strong>ne saisissez que ce que vous avez réellement observé</strong> (aucune donnée inventée).</p>
+{% if erreur %}<div class="card" style="border-left:4px solid var(--bad);"><p>❌ {{ erreur }}</p></div>{% endif %}
+
+<div class="card">
+<form method="post" action="/collectes/nouvelle" enctype="multipart/form-data">
+  <div class="kv">
+    <span class="muted">Plante référencée</span>
+    <span><select name="plante_id">
+      <option value="">— non référencée / inconnue —</option>
+      {% for p in plantes %}<option value="{{ p.id }}">{{ p.scientific_name }}</option>{% endfor %}
+    </select></span>
+    <span class="muted">Nom saisi (si non référencée)</span>
+    <span><input type="text" name="nom_plante_saisi" size="40" placeholder="nom local ou scientifique"></span>
+    <span class="muted">Localité</span>
+    <span><input type="text" name="localite" size="40" placeholder="village, commune…"></span>
+    <span class="muted">Latitude</span>
+    <span><input type="text" name="latitude" size="20" placeholder="ex. 12.3714"></span>
+    <span class="muted">Longitude</span>
+    <span><input type="text" name="longitude" size="20" placeholder="ex. -1.5197"></span>
+    <span class="muted">Précision GPS (m)</span>
+    <span><input type="text" name="precision_gps_m" size="10" placeholder="ex. 5"></span>
+    <span class="muted">Réf. échantillon</span>
+    <span><input type="text" name="echantillon_ref" size="30"></span>
+    <span class="muted">Voucher (herbier)</span>
+    <span><input type="text" name="voucher" size="30" placeholder="ex. OUA-2026-0142"></span>
+    <span class="muted">Partie utilisée</span>
+    <span><input type="text" name="partie_utilisee" size="30" placeholder="feuilles, écorce, racines…"></span>
+    <span class="muted">Confidentialité du GPS</span>
+    <span><select name="niveau_confidentialite">
+      {% for code, label in niveaux.items() %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+    </select><br><span class="muted">« Confidentiel » : GPS visible uniquement par vous.</span></span>
+    <span class="muted">Notes d'observation</span>
+    <span><textarea name="notes" rows="4" cols="50" placeholder="habitat, abondance, état…"></textarea></span>
+    <span class="muted">Photos (terrain)</span>
+    <span><input type="file" name="photos" accept="image/*" multiple>
+      <br><span class="muted">Stockées localement + miniatures (lazy loading). Max 10 Mo / photo.</span></span>
+  </div>
+  <p><button class="badge ok" type="submit" style="cursor:pointer;border:none;">💾 Enregistrer la collecte</button>
+  <a class="badge muted" href="/collectes" style="text-decoration:none;">Annuler</a></p>
+</form>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Collecte #{{ collecte.id }}{% endblock %}
+{% block content %}
+<h1>🌿 Collecte #{{ collecte.id }} <span class="badge {{ classe }}">{{ badge }}</span></h1>
+{% if message %}<div class="card" style="border-left:4px solid var(--ok);"><p>{{ message }}</p></div>{% endif %}
+<p class="muted">Observation de terrain — donnée d'observation locale (jamais confondue avec une donnée publiée).</p>
+
+<div class="card">
+  <div class="kv">
+    <span class="muted">Plante</span><span>{{ nom_plante }}</span>
+    <span class="muted">Localité</span><span>{{ collecte.localite or "—" }}</span>
+    <span class="muted">GPS</span><span>
+      {% if gps.statut == "exact" %}📍 {{ "%.6f"|format(gps.lat) }}, {{ "%.6f"|format(gps.lon) }}
+        {% if collecte.precision_gps_m %}<span class="muted">(± {{ collecte.precision_gps_m }} m)</span>{% endif %}
+      {% elif gps.statut == "floute" %}📍 ≈ {{ "%.1f"|format(gps.lat) }}, {{ "%.1f"|format(gps.lon) }}
+        <span class="badge warn">position floutée (restreint)</span>
+      {% elif gps.statut == "masque" %}<span class="badge bad">GPS masqué — donnée confidentielle (visible uniquement par {{ collecte.auteur or "l'auteur" }})</span>
+      {% else %}—{% endif %}
+    </span>
+    <span class="muted">Confidentialité</span><span>{{ libelles_confidentialite.get(collecte.niveau_confidentialite, collecte.niveau_confidentialite) }}</span>
+    <span class="muted">Échantillon</span><span>{{ collecte.echantillon_ref or "—" }}</span>
+    <span class="muted">Voucher</span><span>{{ collecte.voucher or "—" }}</span>
+    <span class="muted">Partie utilisée</span><span>{{ collecte.partie_utilisee or "—" }}</span>
+    <span class="muted">Notes</span><span>{{ collecte.notes or "—" }}</span>
+    <span class="muted">Auteur</span><span>{{ collecte.auteur or "—" }}</span>
+    <span class="muted">Créée le</span><span>{{ collecte.created_at|date_courte }}</span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📷 Photos ({{ collecte.photos|length if collecte.photos else 0 }})</h2>
+  {% if collecte.photos %}
+  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+    {% for p in collecte.photos %}
+    <figure style="margin:0;">
+      <a href="/collectes/{{ collecte.id }}/photos/{{ p.fichier }}" target="_blank">
+        <img src="/collectes/{{ collecte.id }}/photos/{{ p.miniature }}" alt="{{ p.legende or 'photo de terrain' }}"
+             loading="lazy" style="width:100%;height:auto;border-radius:6px;border:1px solid #dfe6ec;">
+      </a>
+      {% if p.legende %}<figcaption class="muted">{{ p.legende }}</figcaption>{% endif %}
+    </figure>
+    {% endfor %}
+  </div>
+  <p class="muted">Miniatures chargées en différé (<code>loading="lazy"</code>) — l'original ne se charge qu'au clic.</p>
+  {% else %}
+  <p class="muted">Aucune photo.</p>
+  {% endif %}
+</div>
+
+<p>
+  <a class="badge muted" href="/collectes" style="text-decoration:none;">← Toutes les collectes</a>
+  <a class="badge muted" href="/carte" style="text-decoration:none;">🗺 Carte</a>
+</p>
+<form method="post" action="/collectes/{{ collecte.id }}/supprimer" style="display:inline;"
+      data-confirm="Supprimer cette collecte ?">
+  <button class="badge bad" type="submit" style="cursor:pointer;border:none;">🗑 Supprimer</button>
+</form>
+{% endblock %}

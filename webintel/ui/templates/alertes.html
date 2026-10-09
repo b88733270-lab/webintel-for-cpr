@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Alertes{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Alertes</h1>
+  <p class="muted">Projet : <strong>{{ project.name }}</strong> — notifications émises
+  à partir des événements détectés, avec leur canal et leur statut d'envoi.</p>
+</div>
+
+<div class="card">
+  {% if alerts %}
+  <div class="table-wrap">
+  <table class="responsive-cards"><thead><tr><th>Date</th><th>Canal</th><th>Statut</th><th>Résumé</th></tr></thead>
+    <tbody>
+    {% for a in alerts %}
+    <tr><td data-label="Date" class="muted">{{ a.created_at|date_courte }}</td>
+        <td data-label="Canal"><span class="badge muted">{{ a.channel }}</span></td>
+        <td data-label="Statut"><span class="badge {% if a.status == 'sent' %}ok{% elif a.status == 'failed' %}bad{% else %}warn{% endif %}">{{ a.status }}</span></td>
+        <td data-label="Résumé">{{ (a.payload or {}).event.type if (a.payload or {}).event else "—" }}
+            <span class="muted">{{ (a.payload or {}).url | truncate(60) if (a.payload or {}).url }}</span>
+            {% if a.error %}<br><span class="alert-error">{{ a.error }}</span>{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-ico" aria-hidden="true">🔔</div>
+    <h3>Aucune alerte envoyée</h3>
+    <p class="muted">Aucune alerte envoyée pour l'instant. Les alertes naissent
+    des événements détectés par vos moniteurs.</p>
+    <p><a class="btn" href="/moniteurs">Voir les moniteurs</a>
+       <a class="btn secondary" href="/evenements">Voir les événements</a></p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

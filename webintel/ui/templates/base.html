@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="WebIntel — plateforme d'intelligence Web : recherche, entités, analyse d'URL, veille et rapports sourcés.">
+  <title>{% block title %}WebIntel{% endblock %} — WebIntel</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<a class="skip-link" href="#contenu">Aller au contenu</a>
+<div class="app-shell">
+
+  {# Barre supérieure compacte (mobile uniquement, CSS) #}
+  <header class="mobile-topbar">
+    <button type="button" class="icon-btn" data-nav-toggle aria-label="Ouvrir le menu" aria-expanded="false">☰</button>
+    <span class="brand">WebIntel</span>
+    <span class="spacer"></span>
+    <a class="icon-btn" href="/recherche-universelle" aria-label="Recherche">🔎</a>
+    <a class="icon-btn" href="/alertes" aria-label="Alertes">🔔</a>
+  </header>
+  <div class="scrim" data-nav-close aria-hidden="true"></div>
+
+  {# Barre latérale : navigation unique (desktop + drawer mobile) #}
+  <aside class="sidebar" id="sidebar" aria-label="Navigation principale">
+    <div class="sidebar-brand">
+      <div class="logo">WebIntel</div>
+      <div class="tagline">Intelligence Web — recherche, veille, rapports sourcés</div>
+    </div>
+    <div class="sidebar-search">
+      <form method="get" action="/recherche-universelle" role="search">
+        <label class="sr-only" for="q-nav">Recherche globale</label>
+        <input type="search" id="q-nav" name="q" placeholder="Rechercher…" autocomplete="off">
+        <button type="submit" aria-label="Lancer la recherche">OK</button>
+      </form>
+    </div>
+    <nav>
+      <div class="nav-group">
+        <div class="nav-group-title">Principal</div>
+        <a class="nav-link {% if active == 'accueil' %}active{% endif %}" href="/accueil"><span class="nav-ico" aria-hidden="true">⌂</span><span class="nav-label">Accueil</span></a>
+        <a class="nav-link {% if active == 'recherche-universelle' %}active{% endif %}" href="/recherche-universelle"><span class="nav-ico" aria-hidden="true">🔎</span><span class="nav-label">Recherche</span></a>
+        <a class="nav-link {% if active == 'recherche-web' %}active{% endif %}" href="/recherche-web"><span class="nav-ico" aria-hidden="true">🌐</span><span class="nav-label">Recherche Web</span></a>
+        <a class="nav-link {% if active == 'dashboard' %}active{% endif %}" href="/"><span class="nav-ico" aria-hidden="true">▦</span><span class="nav-label">Tableau de bord</span></a>
+        <a class="nav-link {% if active == 'tableau-de-bord' %}active{% endif %}" href="/tableau-de-bord"><span class="nav-ico" aria-hidden="true">🧭</span><span class="nav-label">Chercheur</span></a>
+        <a class="nav-link {% if active == 'entites' %}active{% endif %}" href="/entites"><span class="nav-ico" aria-hidden="true">◆</span><span class="nav-label">Entités</span></a>
+        <a class="nav-link {% if active == 'analyser' %}active{% endif %}" href="/analyser"><span class="nav-ico" aria-hidden="true">🔗</span><span class="nav-label">Analyse URL</span></a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">Veille</div>
+        <a class="nav-link {% if active == 'moniteurs' %}active{% endif %}" href="/moniteurs"><span class="nav-ico" aria-hidden="true">◉</span><span class="nav-label">Monitoring</span></a>
+        <a class="nav-link {% if active == 'evenements' %}active{% endif %}" href="/evenements"><span class="nav-ico" aria-hidden="true">⚡</span><span class="nav-label">Événements</span></a>
+        <a class="nav-link {% if active == 'alertes' %}active{% endif %}" href="/alertes"><span class="nav-ico" aria-hidden="true">🔔</span><span class="nav-label">Notifications / Alertes</span></a>
+        <a class="nav-link {% if active == 'crawls' %}active{% endif %}" href="/crawls"><span class="nav-ico" aria-hidden="true">🕸</span><span class="nav-label">Crawls</span></a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">Résultats</div>
+        <a class="nav-link {% if active == 'recherche' %}active{% endif %}" href="/recherche"><span class="nav-ico" aria-hidden="true">⌕</span><span class="nav-label">Résultats / Recherche avancée</span></a>
+        <a class="nav-link {% if active == 'exports' %}active{% endif %}" href="/exports"><span class="nav-ico" aria-hidden="true">⤓</span><span class="nav-label">Rapports / Exports</span></a>
+        <a class="nav-link {% if active == 'sources' %}active{% endif %}" href="/sources"><span class="nav-ico" aria-hidden="true">🔎</span><span class="nav-label">Sources</span></a>
+        <a class="nav-link {% if active == 'mes-recherches' %}active{% endif %}" href="/mes-recherches"><span class="nav-ico" aria-hidden="true">🕘</span><span class="nav-label">Historique</span></a>
+        <a class="nav-link {% if active == 'comparaison' %}active{% endif %}" href="/comparaison"><span class="nav-ico" aria-hidden="true">⇄</span><span class="nav-label">Comparaison</span></a>
+        <a class="nav-link {% if active == 'collections' %}active{% endif %}" href="/collections"><span class="nav-ico" aria-hidden="true">★</span><span class="nav-label">Favoris / Collections</span></a>
+      </div>
+      <details class="nav-science" {% if active in ['plantes','plante-etude','recherche-science','recherche-terrain','simulations','workflows','laboratoire','qualite','journal','connecteurs','synchronisation'] %}open{% endif %}>
+        <summary><span class="nav-ico" aria-hidden="true">🌿</span><span class="nav-label">Domaine scientifique</span></summary>
+        <a class="nav-link {% if active == 'plantes' %}active{% endif %}" href="/plantes"><span class="nav-ico" aria-hidden="true">🌱</span><span class="nav-label">Plantes</span></a>
+        <a class="nav-link {% if active == 'plante-etude' %}active{% endif %}" href="/plante-etude"><span class="nav-ico" aria-hidden="true">🌿</span><span class="nav-label">Étudier une plante</span></a>
+        <a class="nav-link {% if active == 'recherche-science' %}active{% endif %}" href="/recherche-science"><span class="nav-ico" aria-hidden="true">🔬</span><span class="nav-label">Recherche scientifique</span></a>
+        <a class="nav-link {% if active == 'recherche-terrain' %}active{% endif %}" href="/recherche-terrain"><span class="nav-ico" aria-hidden="true">📍</span><span class="nav-label">Recherche terrain</span></a>
+        <a class="nav-link {% if active == 'simulations' %}active{% endif %}" href="/simulations"><span class="nav-ico" aria-hidden="true">🧪</span><span class="nav-label">Simulations</span></a>
+        <a class="nav-link {% if active == 'workflows' %}active{% endif %}" href="/workflows"><span class="nav-ico" aria-hidden="true">↝</span><span class="nav-label">Workflows</span></a>
+        <a class="nav-link {% if active == 'laboratoire' %}active{% endif %}" href="/laboratoire"><span class="nav-ico" aria-hidden="true">⚗</span><span class="nav-label">Laboratoire</span></a>
+        <a class="nav-link {% if active == 'qualite' %}active{% endif %}" href="/qualite"><span class="nav-ico" aria-hidden="true">✓</span><span class="nav-label">Qualité</span></a>
+        <a class="nav-link" href="/journal"><span class="nav-ico" aria-hidden="true">📓</span><span class="nav-label">Journal</span></a>
+        <a class="nav-link" href="/connecteurs"><span class="nav-ico" aria-hidden="true">🔌</span><span class="nav-label">Connecteurs</span></a>
+        <a class="nav-link {% if active == 'combinaisons' %}active{% endif %}" href="/combinaisons"><span class="nav-ico" aria-hidden="true">🧬</span><span class="nav-label">Combinaisons</span></a>
+        <a class="nav-link {% if active == 'collectes' %}active{% endif %}" href="/collectes"><span class="nav-ico" aria-hidden="true">🌾</span><span class="nav-label">Collectes terrain</span></a>
+        <a class="nav-link" href="/carte"><span class="nav-ico" aria-hidden="true">🗺</span><span class="nav-label">Carte</span></a>
+        <a class="nav-link {% if active == 'synchronisation' %}active{% endif %}" href="/synchronisation"><span class="nav-ico" aria-hidden="true">⇅</span><span class="nav-label">Synchronisation</span></a>
+        <a class="nav-link" href="/outils-scientifiques"><span class="nav-ico" aria-hidden="true">🛠</span><span class="nav-label">Outils scientifiques</span></a>
+        <a class="nav-link" href="/import"><span class="nav-ico" aria-hidden="true">⤒</span><span class="nav-label">Importer</span></a>
+        <a class="nav-link" href="/export"><span class="nav-ico" aria-hidden="true">⤓</span><span class="nav-label">Exporter le dossier</span></a>
+      </details>
+      <div class="nav-group">
+        <div class="nav-group-title">Compte</div>
+        <a class="nav-link {% if active == 'parametres' %}active{% endif %}" href="/parametres"><span class="nav-ico" aria-hidden="true">⚙</span><span class="nav-label">Paramètres</span></a>
+        {% if server_mode and logged_in %}<a class="nav-link" href="/logout"><span class="nav-ico" aria-hidden="true">↩</span><span class="nav-label">Déconnexion</span></a>{% endif %}
+      </div>
+    </nav>
+    <div class="sidebar-foot">
+      <span class="nav-label">WebIntel v3 — chaque résultat affiche sa source et son niveau de données.</span>
+    </div>
+  </aside>
+
+  <div class="main-wrap" id="contenu">
+    {% if hors_ligne %}
+    <div class="offline-banner" role="status">
+      <span aria-hidden="true">⚠️</span>
+      <p style="margin:0;"><strong>Mode hors-ligne actif</strong> — la recherche Web et les fonctions réseau sont indisponibles. Vos données locales (historique, favoris, collections) restent consultables. <a href="/synchronisation">File de synchronisation →</a></p>
+    </div>
+    {% endif %}
+    <div class="offline-banner" id="offline-live" role="status" hidden>
+      <span aria-hidden="true">⚠️</span>
+      <p style="margin:0;"><strong>Connexion interrompue</strong> — la recherche Web nécessite une connexion. Vérifiez votre réseau, puis réessayez. Vos pages locales restent accessibles.</p>
+    </div>
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <footer class="app-footer">WebIntel — plateforme d'intelligence Web. Les synthèses citent toujours leurs sources ; un résultat informatique reste une hypothèse à vérifier.</footer>
+
+  {# Navigation basse tactile (mobile uniquement, CSS) #}
+  <nav class="bottom-nav" aria-label="Navigation mobile">
+    <a href="/accueil" class="{% if active == 'accueil' %}active{% endif %}"><span class="bnav-ico" aria-hidden="true">⌂</span>Accueil</a>
+    <a href="/recherche-universelle" class="{% if active == 'recherche-universelle' %}active{% endif %}"><span class="bnav-ico" aria-hidden="true">🔎</span>Recherche</a>
+    <a href="/entites" class="{% if active == 'entites' %}active{% endif %}"><span class="bnav-ico" aria-hidden="true">◆</span>Entités</a>
+    <a href="/alertes" class="{% if active == 'alertes' %}active{% endif %}"><span class="bnav-ico" aria-hidden="true">🔔</span>Alertes</a>
+    <a href="/parametres" class="{% if active == 'parametres' %}active{% endif %}"><span class="bnav-ico" aria-hidden="true">⚙</span>Plus</a>
+  </nav>
+
+  <div class="toast-region" id="toast-region" aria-live="polite"></div>
+</div>
+<script src="/static/js/app.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

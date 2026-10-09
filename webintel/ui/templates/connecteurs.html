@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Connecteurs{% endblock %}
+
+{% block content %}
+<h1>Connecteurs de sources</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — sources externes
+interrogeables pour importer des données scientifiques. Chaque connecteur
+documente sa licence, ses conditions d'utilisation et sa stratégie de mise à jour :
+on ne copie jamais une base entière sans la connaître.</p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+{% if message %}<div class="alert-ok">{{ message }}</div>{% endif %}
+
+{% if connecteurs is none %}
+<div class="card">
+  <p class="muted">Module des connecteurs en cours d'intégration — réessayez plus tard.</p>
+</div>
+{% elif not connecteurs %}
+<div class="card">
+  <p class="muted">Aucun connecteur déclaré pour l'instant.</p>
+</div>
+{% else %}
+{% for c in connecteurs %}
+<div class="card" style="margin:8px 0;">
+  <p><strong>{{ c.nom }}</strong>
+    {% if c.statut == "actif" %}
+    <span class="badge" style="background-color:#1a7f37;color:#fff;border:none;">Actif</span>
+    {% else %}
+    <span class="badge muted">Inactif</span>
+    {% endif %}
+    {% if c.version_connecteur %}<small class="muted">v{{ c.version_connecteur }}</small>{% endif %}
+  </p>
+  {% if c.description %}<p>{{ c.description }}</p>{% endif %}
+  <table>
+    {% if c.url %}<tr><th style="width:200px;">Source</th>
+      <td><a href="{{ c.url }}" target="_blank" rel="noopener">{{ c.url }}</a></td></tr>{% endif %}
+    <tr><th>Licence</th><td>
+      {% if c.licence_url %}<a href="{{ c.licence_url }}" target="_blank" rel="noopener">{{ c.licence or "—" }}</a>
+      {% else %}{{ c.licence or "—" }}{% endif %}
+    </td></tr>
+    {% if c.conditions_utilisation %}<tr><th>Conditions d'utilisation</th>
+      <td>{{ c.conditions_utilisation }}</td></tr>{% endif %}
+    {% if c.dernier_import %}<tr><th>Dernier import</th><td>{{ c.dernier_import|date_courte }}</td></tr>{% endif %}
+    {% if c.strategie_maj %}<tr><th>Stratégie de mise à jour</th><td>{{ c.strategie_maj }}</td></tr>{% endif %}
+  </table>
+  <form method="post" action="/connecteurs/{{ c.nom }}/importer" style="margin-top:8px;">
+    <button type="submit" {% if c.statut != "actif" %}disabled title="Connecteur inactif"{% endif %}>Importer</button>
+  </form>
+</div>
+{% endfor %}
+{% endif %}
+
+<p><a href="/import">← Aller à l'import</a></p>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Crawls{% endblock %}
+{% block content %}
+<h1>Crawls</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong></p>
+
+{% if error %}<div class="alert-error">{{ error }}</div>{% endif %}
+
+<div class="card">
+  <h2>Lancer un crawl</h2>
+  <form class="inline" method="post" action="/crawls">
+    <div class="field"><label for="start_url">URL de départ</label>
+      <input type="url" id="start_url" name="start_url" placeholder="https://exemple.fr" size="40"></div>
+    <div class="field"><label for="domain">…ou domaine</label>
+      <input type="text" id="domain" name="domain" placeholder="exemple.fr"></div>
+    <div class="field"><label for="max_pages">Pages max</label>
+      <input type="number" id="max_pages" name="max_pages" min="1" max="1000" placeholder="100"></div>
+    <div class="field"><label for="max_depth">Profondeur max</label>
+      <input type="number" id="max_depth" name="max_depth" min="0" max="5" placeholder="2"></div>
+    <button type="submit">Lancer</button>
+  </form>
+  <details><summary>Options avancées</summary>
+    <p class="muted">Par défaut : respect de robots.txt, délai d'une seconde entre requêtes,
+    4 requêtes concurrentes maximum. Les options fines (domaines autorisés, chemins exclus,
+    délai, concurrence) sont configurables via l'API <code>POST /api/crawls</code>.</p>
+  </details>
+</div>
+
+<div class="card">
+  <h2>Jobs récents</h2>
+  {% if jobs %}
+  <table><tr><th>ID</th><th>Type</th><th>Statut</th><th>Progression</th><th>Créé</th></tr>
+    {% for j in jobs %}
+    <tr><td><a href="/crawls/{{ j.id }}">{{ j.id }}</a></td><td>{{ j.kind }}</td>
+        <td><span class="badge {{ job_badge(j.status) }}">{{ j.status }}</span></td>
+        <td>{{ (j.progress or {}).visited or 0 }} visitée(s), {{ (j.progress or {}).discovered or 0 }} découverte(s)</td>
+        <td class="muted">{{ j.created_at|date_courte }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Aucun crawl lancé pour l'instant.</p>{% endif %}
+</div>
+{% endblock %}

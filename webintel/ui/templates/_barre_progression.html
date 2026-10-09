@@ -1,0 +1,22 @@
+{# Partiel : barre de progression de l'assistant (étapes 1 à 6). #}
+{% set etapes = [
+  (1, "Objet"),
+  (2, "Éléments"),
+  (3, "Analyses"),
+  (4, "Vérification"),
+  (5, "Lancement"),
+  (6, "Résultats"),
+] %}
+<nav class="wizard-progress" aria-label="Progression de l'assistant">
+  {% for numero, libelle in etapes %}
+    {% if numero < etape_courante %}
+      <span class="wizard-step done">✓ {{ numero }} · {{ libelle }}</span>
+    {% elif numero == etape_courante %}
+      <span class="wizard-step current"><strong>{{ numero }} · {{ libelle }}</strong></span>
+    {% else %}
+      <span class="wizard-step todo">{{ numero }} · {{ libelle }}</span>
+    {% endif %}
+    {% if not loop.last %}<span class="wizard-sep">─</span>{% endif %}
+  {% endfor %}
+</nav>
+

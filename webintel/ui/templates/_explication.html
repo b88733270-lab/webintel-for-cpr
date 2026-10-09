@@ -1,0 +1,10 @@
+{# Partiel : encadré dépliable « Qu'est-ce que cela signifie ? ».
+   Contexte attendu : ``explication`` (dict de explication_pour()). #}
+{% if explication %}
+<details class="explication">
+  <summary>Qu'est-ce que cela signifie ? — {{ explication.titre }}</summary>
+  <p>{{ explication.explication }}</p>
+  {% if explication.echelle %}<p class="muted">{{ explication.echelle }}</p>{% endif %}
+  {% if explication.exemple %}<p><em>{{ explication.exemple }}</em></p>{% endif %}
+</details>
+{% endif %}

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Accueil{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Que souhaitez-vous étudier&nbsp;?</h1>
+  <p class="muted">WebIntel explore le Web, les entités et vos sources, puis présente
+  chaque résultat avec sa source et son niveau de données. Le domaine
+  scientifique (plantes, molécules, littérature) reste disponible dans la
+  section spécialisée de la navigation.</p>
+</div>
+
+<div class="card">
+  {% include "_recherche_globale.html" %}
+  <p style="margin-top:0.6rem;">
+    <a class="badge" href="/recherche-web" style="text-decoration:none;">🌐 Rechercher sur le Web</a>
+    <span class="muted">Wikipedia, actualités, GitHub — plusieurs fournisseurs avec fallback automatique, sans clé requise.</span>
+  </p>
+  <div class="page-actions">
+    <a class="btn secondary btn-sm" href="/analyser">🔗 Analyser une URL</a>
+    <a class="btn secondary btn-sm" href="/recherche">⌕ Recherche avancée</a>
+    <a class="btn secondary btn-sm" href="/moniteurs">◉ Créer un moniteur</a>
+  </div>
+</div>
+
+<h2>Raccourcis</h2>
+<div class="grid">
+  <a class="card card-link" href="/analyser" style="text-decoration:none;color:inherit;">
+    <h3>Analyse URL</h3>
+    <p class="muted">Collez une adresse Web : fiche d'identité, entités repérées, changements détectés.</p>
+    <p><strong>Ouvrir →</strong></p>
+  </a>
+  <a class="card card-link" href="/entites" style="text-decoration:none;color:inherit;">
+    <h3>Entités</h3>
+    <p class="muted">Personnes, organisations, produits et pages repérés, avec leurs observations par source.</p>
+    <p><strong>Explorer →</strong></p>
+  </a>
+  <a class="card card-link" href="/evenements" style="text-decoration:none;color:inherit;">
+    <h3>Événements</h3>
+    <p class="muted">Changements détectés par les analyses et les moniteurs, datés et sourcés.</p>
+    <p><strong>Voir →</strong></p>
+  </a>
+  <a class="card card-link" href="/exports" style="text-decoration:none;color:inherit;">
+    <h3>Rapports / Exports</h3>
+    <p class="muted">Générez un fichier téléchargeable (JSON, CSV, XLSX) à partir des données collectées.</p>
+    <p><strong>Générer →</strong></p>
+  </a>
+</div>
+
+<h2>Recherches récentes</h2>
+{% if recherches_recentes %}
+<div class="card">
+  <ul class="timeline">
+    {% for r in recherches_recentes %}
+    <li class="done"><span class="tl-date">{{ r.date or "" }}</span><br>
+      <a href="{{ r.url }}">{{ r.libelle }}</a>
+      {% if r.detail %}<span class="muted">— {{ r.detail }}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-ico" aria-hidden="true">🕘</div>
+  <h3>Aucune recherche récente affichée ici</h3>
+  <p class="muted">Lancez une recherche ci-dessus : vos dossiers et vos dernières
+  analyses sont conservés dans Historique.</p>
+  <p><a class="btn" href="/mes-recherches">Ouvrir l'historique</a></p>
+</div>
+{% endif %}
+
+<h2>Favoris et collections</h2>
+{% if favoris %}
+<div class="grid">
+  {% for f in favoris %}
+  <a class="card card-link" href="{{ f.url }}" style="text-decoration:none;color:inherit;">
+    <h3>{{ f.libelle }}</h3>
+    {% if f.detail %}<p class="muted">{{ f.detail }}</p>{% endif %}
+    <p><strong>Ouvrir →</strong></p>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-ico" aria-hidden="true">★</div>
+  <h3>Aucun favori pour le moment</h3>
+  <p class="muted">Vos collectes de terrain et vos dossiers épinglés apparaîtront
+  dans Favoris / Collections. Rien n'est affiché sans donnée réelle.</p>
+  <p><a class="btn secondary" href="/collections">Voir les collections</a></p>
+</div>
+{% endif %}
+
+<h2>Parcours chercheur</h2>
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+  <a class="card" href="/plante-etude" style="text-decoration:none;color:inherit;">
+    <div style="font-size:2.2rem;">🌿</div>
+    <h2>Une plante</h2>
+    <p class="muted">Saisissez un nom scientifique ou local et consultez sa fiche&nbsp;: identité, botanique, phytochimie, pharmacologie, publications, sécurité, simulations.</p>
+    <p><strong>Étudier une plante →</strong></p>
+  </a>
+  <a class="card" href="/recherche-science?type=compose" style="text-decoration:none;color:inherit;">
+    <h2>Une molécule</h2>
+    <p class="muted">Recherchez un composé chimique&nbsp;: propriétés, plantes associées, cibles rapportées dans la littérature.</p>
+    <p><strong>Rechercher une molécule →</strong></p>
+  </a>
+  <a class="card" href="/recherche-science?type=publication" style="text-decoration:none;color:inherit;">
+    <h2>Une publication</h2>
+    <p class="muted">Explorez les publications et preuves documentaires enregistrées, avec leurs DOI et références.</p>
+    <p><strong>Rechercher une publication →</strong></p>
+  </a>
+  <a class="card" href="/etudes/nouvelle" style="text-decoration:none;color:inherit;">
+    <div style="font-size:2.2rem;">🔬</div>
+    <h2>Une nouvelle étude</h2>
+    <p class="muted">Lancez l'assistant de création d'étude&nbsp;: le système produit un dossier d'analyse informatique, toujours présenté comme une hypothèse à vérifier expérimentalement.</p>
+    <p><strong>Créer une étude →</strong></p>
+  </a>
+  <a class="card" href="/mes-recherches" style="text-decoration:none;color:inherit;">
+    <div style="font-size:2.2rem;">📊</div>
+    <h2>Mes recherches</h2>
+    <p class="muted">Retrouvez vos dossiers de recherche&nbsp;: plantes, molécules, analyses réalisées, dernière simulation.</p>
+    <p><strong>Ouvrir mes recherches →</strong></p>
+  </a>
+</div>
+
+<div class="card" style="margin-top:1.2rem;">
+  <h2>Niveaux de données</h2>
+  <p class="muted">WebIntel sépare strictement les niveaux de preuve. Une case vide signifie « pas de donnée », jamais « pas d'effet ».</p>
+  <p>
+    {% for couleur, label, texte in niveaux %}
+    <span class="badge" style="background-color:{{ couleur }};color:#fff;">{{ label }}</span>
+    <span class="muted">{{ texte }}</span>{% if not loop.last %} &nbsp;·&nbsp; {% endif %}
+    {% endfor %}
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Combinaisons{% endblock %}
+{% block content %}
+<h1>Combinaisons</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — études de
+combinaison (screening structural), analyses de synergie (données
+expérimentales) et docking moléculaire.</p>
+<p class="alert-error"><strong>Résultats informatiques — à confirmer
+expérimentalement.</strong> Aucune prédiction n'est présentée comme un fait
+établi.</p>
+
+{% if message %}<div class="alert-success">{{ message }}</div>{% endif %}
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<div class="card">
+  <p>
+    <a class="btn" href="/combinaisons/nouvelle">＋ Nouvelle étude</a>
+    <a class="btn" href="/simulations">＋ Nouvelle simulation</a>
+    <a class="btn" href="/synergie/importer">⬆ Importer mes résultats</a>
+    <a class="btn" href="/rapport">⬇ Exporter mon dossier</a>
+  </p>
+  <p class="muted">« Nouvelle étude » : screening structural d'une combinaison
+  (2 molécules minimum). « Importer mes résultats » : analyse de synergie
+  (Bliss, Loewe, HSA, ZIP) à partir de vos mesures de laboratoire.
+  « Exporter mon dossier » : rapport reproductible (JSON, Markdown, HTML,
+  PDF, ZIP).</p>
+</div>
+
+<h2>Études de combinaison ({{ etudes|length }})</h2>
+{% if etudes %}
+<table>
+  <tr><th>Nom</th><th>Statut</th><th>Niveau</th><th>Empreinte</th><th></th></tr>
+  {% for e in etudes %}
+  <tr>
+    <td><a href="/combinaisons/{{ e.id }}">{{ e.nom }}</a></td>
+    <td>{{ e.statut }}</td>
+    <td><span class="badge">Prédiction</span></td>
+    <td><code>{{ (e.inputs_hash or "")[:12] }}</code></td>
+    <td><a href="/combinaisons/{{ e.id }}">Dossier (12 points)</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="muted">Aucune étude pour ce projet.
+<a href="/combinaisons/nouvelle">Créer la première étude</a>.</p>
+{% endif %}
+
+<h2>Analyses de synergie ({{ analyses|length }})</h2>
+{% if analyses %}
+<table>
+  <tr><th>Nom</th><th>Méthode</th><th>Statut</th><th>Confidentiel</th><th></th></tr>
+  {% for a in analyses %}
+  <tr>
+    <td><a href="/synergie/{{ a.id }}">{{ a.nom }}</a></td>
+    <td>{{ a.methode|upper }}</td>
+    <td>{{ a.statut }}</td>
+    <td>{% if a.is_private %}Oui (labo){% else %}Non{% endif %}</td>
+    <td><a href="/synergie/{{ a.id }}">Résultat</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="muted">Aucune analyse. <a href="/synergie/importer">Importer mes
+résultats expérimentaux</a>.</p>
+{% endif %}
+
+<h2>Jobs de docking ({{ jobs|length }})</h2>
+{% if jobs %}
+<table>
+  <tr><th>Nom</th><th>Statut</th><th>Moteur</th><th></th></tr>
+  {% for j in jobs %}
+  <tr>
+    <td><a href="/docking/{{ j.id }}">{{ j.nom }}</a></td>
+    <td>{{ j.statut }}</td>
+    <td>{{ j.moteur or "—" }}</td>
+    <td><a href="/docking/{{ j.id }}">Détail</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="muted">Aucun job. <a href="/docking">Ouvrir le workflow docking</a>.</p>
+{% endif %}
+{% endblock %}
