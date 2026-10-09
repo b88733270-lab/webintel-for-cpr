@@ -1,0 +1,67 @@
+# WebIntel — packaging Python (v2.3).
+#
+# Installation :
+#   pip install -e .            -> installation standard : RDKit inclus
+#                                  par défaut (empreintes de Morgan,
+#                                  descripteurs, sous-structures,
+#                                  normalisation moléculaire)
+#   pip install -e ".[science]"  -> compatibilité : ajoute meeko
+#                                  (préparation SMILES -> PDBQT pour
+#                                  le docking). RDKit est déjà fourni
+#                                  par l'installation standard.
+#
+# RDKit est une dépendance standard depuis cette version. Le code reste
+# capable de démarrer sans RDKit (installation allégée ou retrait
+# manuel) : les calculs concernés retournent alors un statut explicite
+# « non calculable », sans valeur inventée
+# (voir docs/runtime_scientifique.md).
+#
+# Le script install.sh historique continue d'utiliser requirements.txt ;
+# ce fichier ajoute le support des extras.
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "webintel"
+version = "3.0.7"
+description = "WebIntel — plateforme d'intelligence web et scientifique (pharmacognosie, phytochimie, produits naturels)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Voir LICENSE / README.md" }
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "pydantic>=2.6",
+    "SQLAlchemy>=2.0",
+    "httpx>=0.27",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "Jinja2>=3.1",
+    "openpyxl>=3.1",
+    "python-multipart>=0.0.9",
+    "psycopg[binary]>=3.1",
+    "reportlab>=4.0",
+    "rdkit",
+    "pytest>=8.0",
+]
+
+[project.optional-dependencies]
+# Extra "science" (compatibilité) : RDKit est désormais dans les
+# dépendances principales (installation standard). L'extra n'ajoute
+# plus que meeko, la préparation SMILES -> PDBQT pour le docking, qui
+# reste optionnelle. `pip install ".[science]"` continue de
+# fonctionner et fournit RDKit (via les dépendances principales) +
+# meeko. Sans meeko, WebIntel fonctionne normalement et demande
+# explicitement un ligand PDBQT déjà préparé pour le docking.
+science = [
+    "meeko",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["webintel*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

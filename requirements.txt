@@ -1,0 +1,20 @@
+# WebIntel — dépendances de l'installation standard.
+# RDKit est installé par défaut : descripteurs moléculaires, similarité
+# structurelle (Morgan/Tanimoto) et normalisation sont disponibles dès
+# l'installation standard. Le code sait aussi démarrer sans RDKit
+# (retrait manuel) : les calculs concernés sont alors signalés
+# « non calculables », sans valeur inventée.
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2.6
+SQLAlchemy>=2.0
+httpx>=0.27
+beautifulsoup4>=4.12
+lxml>=5.0
+Jinja2>=3.1
+openpyxl>=3.1
+python-multipart>=0.0.9
+psycopg[binary]>=3.1
+reportlab>=4.0
+rdkit
+pytest>=8.0
