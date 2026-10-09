@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Workflows{% endblock %}
+{% block content %}
+<h1>Workflows chercheur</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — enchaînez pas à
+pas les 7 étapes d'une analyse scientifique, avec traçabilité complète.</p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<h2 id="nouveau">Créer un workflow</h2>
+<div class="card">
+  <form method="post" action="/workflows" class="inline">
+    <div class="field"><label for="type">Type d'analyse</label>
+      <select id="type" name="type">
+        <option value="analyse_plante" {% if form.type == "analyse_plante" %}selected{% endif %}>Analyse d'une plante médicinale</option>
+      </select></div>
+    <div class="field"><label for="nom">Nom du workflow</label>
+      <input type="text" id="nom" name="nom" value="{{ form.nom }}" placeholder="ex. Analyse Artemisia annua"></div>
+    <div class="field"><label for="plant_id">N° de la plante</label>
+      <input type="number" id="plant_id" name="plant_id" value="{{ form.plant_id }}" min="1" required placeholder="ex. 3"></div>
+    <div class="field"><label for="compound_id">N° du composé à simuler</label>
+      <input type="number" id="compound_id" name="compound_id" value="{{ form.compound_id }}" min="1" required placeholder="ex. 7"></div>
+    <div class="field"><label for="engine_name">Moteur de simulation</label>
+      <select id="engine_name" name="engine_name">
+        <option value="" {% if not form.engine_name %}selected{% endif %}>Automatique (recommandé)</option>
+        {% for m in moteurs %}
+        <option value="{{ m.nom }}" {% if form.engine_name == m.nom %}selected{% endif %}>{{ m.nom }}{% if not m.disponible %} — indisponible{% endif %}</option>
+        {% endfor %}
+      </select></div>
+    <button type="submit">Créer</button>
+  </form>
+  <p class="muted">Le workflow « Analyse d'une plante médicinale » enchaîne 7
+  étapes : sélection de la plante, recensement des constituants, collecte des
+  publications, sélection de la molécule, simulation in silico, rapport, export.
+  Le composé doit faire partie des constituants recensés de la plante.</p>
+</div>
+
+<h2>Workflows ({{ runs|length }})</h2>
+{% if runs %}
+<table>
+  <tr><th>Nom</th><th>Type</th><th>Statut</th><th>Étape</th><th>Créé le</th></tr>
+  {% for run in runs %}
+  <tr>
+    <td><a href="/workflows/{{ run.id }}"><strong>{{ run.nom }}</strong></a></td>
+    <td>{{ run.type_label }}</td>
+    <td><span class="badge {{ run.statut_classe }}">{{ run.statut_label }}</span></td>
+    <td>{{ run.etape_affichee }}</td>
+    <td class="muted">{{ run.date }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="muted">Aucun workflow pour le moment — créez le premier ci-dessus.</p>
+{% endif %}
+{% endblock %}

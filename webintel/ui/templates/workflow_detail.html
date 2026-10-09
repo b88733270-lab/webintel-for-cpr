@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Workflow — {{ run.nom }}{% endblock %}
+{% from "_macros.html" import pill_etape, rendre %}
+{% block content %}
+<p><a href="/workflows">← Retour aux workflows</a></p>
+<h1>{{ run.nom }}</h1>
+<p class="muted">Type : <strong>{{ run.type_label }}</strong> ·
+Statut : <span class="badge {{ run.statut_classe }}">{{ run.statut_label }}</span> ·
+Étape {{ run.etape_affichee }} · Créé le {{ run.date }}</p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<h2>Pas-à-pas ({{ run.etapes|length }} étapes)</h2>
+{% for etape in run.etapes %}
+<div class="card {% if etape.nom == 'simulation' %}frame-prediction{% endif %}">
+  <div class="section-titre">
+    <h2>Étape {{ loop.index }} — {{ etape.libelle }}</h2>
+    {{ pill_etape(etape.statut_cle, etape.statut_label) }}
+  </div>
+  {% if etape.nom == "simulation" %}
+  <p class="alert-error"><strong>{{ etape.avertissement or "Simulation — à confirmer expérimentalement." }}</strong>
+  Le résultat de cette étape est une prédiction informatique, jamais une preuve
+  expérimentale.</p>
+  {% endif %}
+  {% if etape.erreur %}
+  <p class="alert-error"><strong>Échec de l'étape :</strong> {{ etape.erreur }}</p>
+  {% endif %}
+  {% if etape.sorties %}
+  <details><summary>Voir les sorties de l'étape</summary>
+    {{ rendre(etape.sorties) }}
+  </details>
+  {% elif not etape.erreur %}
+  <p class="muted">Pas encore de sortie pour cette étape.</p>
+  {% endif %}
+</div>
+{% endfor %}
+
+<div class="card">
+  {% if run.statut_cle == "en_cours" %}
+  <form method="post" action="/workflows/{{ run.id }}/avancer" style="display:inline;">
+    <button type="submit">Avancer d'une étape</button>
+  </form>
+  {% endif %}
+  {% if run.statut_cle == "echoue" %}
+  <form method="post" action="/workflows/{{ run.id }}/avancer" style="display:inline;">
+    <button type="submit">Réessayer l'étape</button>
+  </form>
+  <form method="post" action="/workflows/{{ run.id }}/rejouer" style="display:inline; margin-left:0.6rem;">
+    <button type="submit" class="secondary">Rejouer depuis le début</button>
+  </form>
+  <p class="muted">« Réessayer » relance l'étape échouée (après correction des
+  données). « Rejouer » réinitialise tout le workflow depuis ses inputs initiaux.</p>
+  {% elif run.statut_cle == "termine" %}
+  <form method="post" action="/workflows/{{ run.id }}/rejouer" style="display:inline;">
+    <button type="submit" class="secondary">Rejouer depuis le début</button>
+  </form>
+  <p class="alert-ok">Ce workflow est terminé. Le rapport final est disponible
+  ci-dessous.</p>
+  {% else %}
+  <p class="muted">« Avancer » exécute la prochaine étape du workflow.</p>
+  {% endif %}
+</div>
+
+{% if run.rapport %}
+<div class="card">
+  <h2>Rapport final</h2>
+  {% if run.avertissement_export %}
+  <p class="alert-error"><strong>{{ run.avertissement_export }}</strong></p>
+  {% endif %}
+  {% for titre, section in run.rapport.items() %}
+  <h3>{{ titre }}</h3>
+  {{ rendre(section) }}
+  {% endfor %}
+  {% if run.simulation_id %}
+  <p class="muted">Simulation source : n° {{ run.simulation_id }} (niveau
+  « prédiction » — à confirmer expérimentalement).</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

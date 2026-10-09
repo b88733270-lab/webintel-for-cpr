@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block title %}Données terrain — {{ plante.scientific_name }}{% endblock %}
+{% from "_macros.html" import badge_niveau %}
+{% block content %}
+<h1>Données terrain — <em>{{ plante.scientific_name }}</em></h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> —
+<a href="/plantes/{{ plante.id }}">← fiche plante</a> ·
+<a href="/recherche-terrain">recherche par nom</a></p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<h2>Noms vernaculaires ({{ noms|length }})</h2>
+<div class="card">
+  <form method="post" action="/plantes/{{ plante.id }}/terrain/noms" class="inline">
+    <div class="field"><label for="nv-nom">Nom (tel que rapporté)</label>
+      <input type="text" id="nv-nom" name="nom_original" required placeholder="ex. Karité"></div>
+    <div class="field"><label for="nv-langue">Langue (jamais devinée)</label>
+      <select id="nv-langue" name="langue">
+        <option value="">— non renseignée —</option>
+        {% for code, libelle in langues %}<option value="{{ code }}">{{ libelle }}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="nv-region">Région</label>
+      <input type="text" id="nv-region" name="region" placeholder="ex. Hauts-Bassins"></div>
+    <div class="field"><label for="nv-localite">Localité</label>
+      <input type="text" id="nv-localite" name="localite"></div>
+    <div class="field"><label for="nv-source">Source</label>
+      <input type="text" id="nv-source" name="source" placeholder="ex. enquête terrain 2026"></div>
+    <div class="field"><label for="nv-conf">Confidentialité</label>
+      <select id="nv-conf" name="niveau_confidentialite">
+        {% for v, l in niveaux %}<option value="{{ v }}" {% if v == "projet" %}selected{% endif %}>{{ l }}</option>{% endfor %}
+      </select></div>
+    <button type="submit">Ajouter le nom</button>
+  </form>
+</div>
+{% if noms %}
+<table>
+  <tr><th>Nom</th><th>Langue</th><th>Région / localité</th><th>Source</th><th>Confidentialité</th></tr>
+  {% for n in noms %}
+  <tr>
+    <td><strong>{{ n.nom_original }}</strong></td>
+    <td>{{ dict(langues).get(n.langue, n.langue) if n.langue else "non renseignée" }}</td>
+    <td>{{ [n.region, n.localite]|select|join(" — ") or "—" }}</td>
+    <td>{{ n.source or "—" }}</td>
+    <td><span class="badge muted">{{ n.niveau_confidentialite }}</span></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<p class="muted">Aucun nom vernaculaire enregistré.</p>{% endif %}
+
+<h2>{{ bandeau_usage }} ({{ usages|length }})</h2>
+<div class="card"><strong>{{ bandeau_usage }}</strong> — données rapportées telles qu'enquêtées ou publiées.
+Ce ne sont ni des preuves d'efficacité ni des recommandations thérapeutiques.</div>
+<div class="card">
+  <form method="post" action="/plantes/{{ plante.id }}/terrain/usages" class="inline">
+    <div class="field" style="flex-basis:100%;"><label for="u-usage">Usage rapporté (verbatim)</label>
+      <textarea id="u-usage" name="usage" rows="2" cols="70" required placeholder="ex. décoction des feuilles bue contre les maux de ventre"></textarea></div>
+    <div class="field"><label for="u-partie">Partie utilisée</label>
+      <input type="text" id="u-partie" name="partie_utilisee" placeholder="ex. feuilles"></div>
+    <div class="field"><label for="u-prep">Préparation</label>
+      <input type="text" id="u-prep" name="preparation" placeholder="ex. décoction"></div>
+    <div class="field"><label for="u-forme">Forme</label>
+      <input type="text" id="u-forme" name="forme" placeholder="ex. tisane"></div>
+    <div class="field"><label for="u-voie">Voie d'administration</label>
+      <input type="text" id="u-voie" name="voie_administration" placeholder="ex. orale"></div>
+    <div class="field"><label for="u-groupe">Groupe de population</label>
+      <input type="text" id="u-groupe" name="groupe_population" placeholder="ex. Mossi"></div>
+    <div class="field"><label for="u-localite">Localité</label>
+      <input type="text" id="u-localite" name="localite"></div>
+    <div class="field"><label for="u-source">Source</label>
+      <input type="text" id="u-source" name="source" placeholder="ex. enquête terrain Bobo-Dioulasso 2026"></div>
+    <div class="field"><label for="u-conf">Confidentialité</label>
+      <select id="u-conf" name="niveau_confidentialite">
+        {% for v, l in niveaux %}<option value="{{ v }}" {% if v == "restreint" %}selected{% endif %}>{{ l }}</option>{% endfor %}
+      </select></div>
+    <button type="submit">Ajouter l'usage</button>
+  </form>
+</div>
+{% if usages %}
+<table>
+  <tr><th>Usage rapporté</th><th>Partie</th><th>Préparation</th><th>Localité</th><th>Source</th><th>Confidentialité</th></tr>
+  {% for u in usages %}
+  <tr>
+    <td>{{ u.usage }}</td>
+    <td>{{ u.partie_utilisee or "—" }}</td>
+    <td>{{ u.preparation or "—" }}</td>
+    <td>{{ u.localite or "—" }}</td>
+    <td>{{ u.source or "—" }}</td>
+    <td><span class="badge muted">{{ u.niveau_confidentialite }}</span></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<p class="muted">Aucun usage traditionnel enregistré.</p>{% endif %}
+
+<h2>Échantillons ({{ echantillons|length }}) &amp; vouchers</h2>
+<div class="card">
+  <form method="post" action="/plantes/{{ plante.id }}/terrain/echantillons" class="inline">
+    <div class="field"><label for="e-code">Code échantillon *</label>
+      <input type="text" id="e-code" name="code_echantillon" required placeholder="ex. BF-2026-001"></div>
+    <div class="field"><label for="e-voucher">Voucher</label>
+      <select id="e-voucher" name="voucher_id">
+        <option value="">— aucun —</option>
+        {% for v in vouchers %}<option value="{{ v.id }}">{{ v.code_voucher }}{% if v.institution %} ({{ v.institution }}){% endif %}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="e-collecteur">Collecteur</label>
+      <input type="text" id="e-collecteur" name="collecteur"></div>
+    <div class="field"><label for="e-pays">Pays</label>
+      <input type="text" id="e-pays" name="pays" value="Burkina Faso"></div>
+    <div class="field"><label for="e-region">Région</label>
+      <input type="text" id="e-region" name="region"></div>
+    <div class="field"><label for="e-commune">Commune</label>
+      <input type="text" id="e-commune" name="commune"></div>
+    <div class="field"><label for="e-localite">Localité</label>
+      <input type="text" id="e-localite" name="localite"></div>
+    <div class="field"><label for="e-lat">Latitude (optionnel, jamais inventé)</label>
+      <input type="text" id="e-lat" name="latitude" placeholder="ex. 12.3714"></div>
+    <div class="field"><label for="e-lon">Longitude (optionnel, jamais inventé)</label>
+      <input type="text" id="e-lon" name="longitude" placeholder="ex. -1.5197"></div>
+    <div class="field"><label for="e-partie">Partie collectée</label>
+      <input type="text" id="e-partie" name="partie" placeholder="ex. feuilles"></div>
+    <div class="field"><label for="e-habitat">Habitat</label>
+      <input type="text" id="e-habitat" name="habitat"></div>
+    <div class="field"><label for="e-source">Source</label>
+      <input type="text" id="e-source" name="source"></div>
+    <button type="submit">Ajouter l'échantillon</button>
+  </form>
+</div>
+<div class="card">
+  <form method="post" action="/plantes/{{ plante.id }}/terrain/vouchers" class="inline">
+    <div class="field"><label for="v-code">Code voucher *</label>
+      <input type="text" id="v-code" name="code_voucher" required placeholder="ex. OUA-2026-0147"></div>
+    <div class="field"><label for="v-inst">Institution</label>
+      <input type="text" id="v-inst" name="institution" placeholder="ex. Herbier National du Burkina Faso"></div>
+    <div class="field"><label for="v-acro">Code herbier</label>
+      <input type="text" id="v-acro" name="code_herbier" placeholder="ex. OUA"></div>
+    <button type="submit">Ajouter le voucher</button>
+  </form>
+</div>
+{% if echantillons %}
+<table>
+  <tr><th>Code</th><th>Voucher</th><th>Localisation</th><th>Partie</th><th>Source</th><th>Chaîne</th></tr>
+  {% for e in echantillons %}
+  <tr>
+    <td><strong>{{ e.code_echantillon }}</strong></td>
+    <td>{{ (chaines[e.id].voucher.code_voucher if chaines.get(e.id) and chaines[e.id].voucher) or "—" }}</td>
+    <td>{{ [e.pays, e.region, e.commune, e.localite]|select|join(", ") or "—" }}</td>
+    <td>{{ e.partie or "—" }}</td>
+    <td>{{ e.source or "—" }}</td>
+    <td>
+      {% set ch = chaines.get(e.id) %}
+      {% if ch and ch.extractions %}{{ ch.extractions|length }} extraction(s){% else %}<span class="muted">—</span>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<p class="muted">Aucun échantillon enregistré.</p>{% endif %}
+
+<h2>Extractions</h2>
+<div class="card">
+  <form method="post" action="/plantes/{{ plante.id }}/terrain/extractions" class="inline">
+    <div class="field"><label for="x-ech">Échantillon *</label>
+      <select id="x-ech" name="echantillon_id" required>
+        <option value="">— choisir —</option>
+        {% for e in echantillons %}<option value="{{ e.id }}">{{ e.code_echantillon }}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="x-nom">Nom</label>
+      <input type="text" id="x-nom" name="nom" placeholder="ex. extraction aqueuse"></div>
+    <div class="field"><label for="x-meth">Méthode</label>
+      <input type="text" id="x-meth" name="methode" placeholder="ex. macération 48 h"></div>
+    <div class="field"><label for="x-solv">Solvant</label>
+      <input type="text" id="x-solv" name="solvant" placeholder="ex. eau, éthanol 70 %"></div>
+    <button type="submit">Ajouter l'extraction</button>
+  </form>
+</div>
+{% for e in echantillons %}
+  {% set ch = chaines.get(e.id) %}
+  {% if ch and ch.extractions %}
+  <h3>{{ e.code_echantillon }} — chaîne complète</h3>
+  <ul>
+  {% for x in ch.extractions %}
+    <li><strong>Extraction</strong> {{ x.extraction.nom or ("#"+x.extraction.id|string) }}
+      {% if x.extraction.solvant %}({{ x.extraction.solvant }}){% endif %}
+      <ul>
+      {% for xt in x.extraits %}
+        <li><strong>Extrait</strong> {{ xt.extrait.code_extrait or ("#"+xt.extrait.id|string) }}
+          <ul>
+          {% for f in xt.fractions %}
+            <li><strong>Fraction</strong> {{ f.fraction.code_fraction or ("#"+f.fraction.id|string) }}
+              {% if f.composes %}<ul>
+                {% for c in f.composes %}<li>{{ c.nom_compose or ("composé #"+c.compound_id|string) }} — <span class="badge muted">{{ c.identification_statut }}</span></li>{% endfor %}
+              </ul>{% endif %}
+            </li>
+          {% endfor %}
+          </ul>
+        </li>
+      {% endfor %}
+      </ul>
+    </li>
+  {% endfor %}
+  </ul>
+  {% endif %}
+{% endfor %}
+
+<h2>Analyses phytochimiques ({{ analyses|length }})</h2>
+<div class="card">
+  <form method="post" action="/plantes/{{ plante.id }}/terrain/analyses" class="inline">
+    <div class="field"><label for="a-meth">Technique *</label>
+      <select id="a-meth" name="methode" required>
+        {% for t in techniques %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="a-ech">Échantillon (ID)</label>
+      <input type="text" id="a-ech" name="echantillon_id" placeholder="ex. 3"></div>
+    <div class="field"><label for="a-inst">Instrument</label>
+      <input type="text" id="a-inst" name="instrument"></div>
+    <div class="field"><label for="a-lab">Laboratoire</label>
+      <input type="text" id="a-lab" name="laboratoire"></div>
+    <div class="field"><label for="a-op">Opérateur</label>
+      <input type="text" id="a-op" name="operateur"></div>
+    <button type="submit">Ajouter l'analyse</button>
+  </form>
+  <p class="muted">Rattachez l'analyse à au moins un échantillon, un extrait ou une fraction (via l'API pour extrait/fraction).</p>
+</div>
+{% if analyses %}
+<table>
+  <tr><th>ID</th><th>Technique</th><th>Échantillon</th><th>Laboratoire</th><th>Pics</th><th>Niveau</th></tr>
+  {% for a in analyses %}
+  <tr>
+    <td>{{ a.id }}</td>
+    <td><strong>{{ a.methode }}</strong></td>
+    <td>{{ a.echantillon_id or "—" }}</td>
+    <td>{{ a.laboratoire or "—" }}</td>
+    <td>
+      {% set pics = pics_par_analyse.get(a.id, []) %}
+      {{ pics|length }} pic(s)
+      {% for p in pics %}<br><span class="muted">tR={{ p.temps_retention or "?" }} min — {{ p.identification_statut }}</span>{% endfor %}
+    </td>
+    <td>{{ badge_niveau(a.data_level) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<p class="muted">Aucune analyse enregistrée.</p>{% endif %}
+
+<h2>Pharmacognosie</h2>
+<div class="card">
+  <form method="post" action="/plantes/{{ plante.id }}/terrain/pharmacognosie">
+    {% set pg = pharmacognosie %}
+    <div class="field" style="flex-basis:100%;"><label for="pg-macro">Identification macroscopique</label>
+      <textarea id="pg-macro" name="identification_macro" rows="2" cols="70">{{ pg.identification_macro if pg else "" }}</textarea></div>
+    <div class="field" style="flex-basis:100%;"><label for="pg-micro">Identification microscopique</label>
+      <textarea id="pg-micro" name="identification_micro" rows="2" cols="70">{{ pg.identification_micro if pg else "" }}</textarea></div>
+    <div class="field" style="flex-basis:100%;"><label for="pg-org">Caractères organoleptiques</label>
+      <textarea id="pg-org" name="organoleptique" rows="2" cols="70">{{ pg.organoleptique if pg else "" }}</textarea></div>
+    <div class="field"><label for="pg-partie">Partie utilisée</label>
+      <input type="text" id="pg-partie" name="partie_utilisee" value="{{ pg.partie_utilisee if pg else "" }}"></div>
+    <div class="field" style="flex-basis:100%;"><label for="pg-auth">Authentification</label>
+      <textarea id="pg-auth" name="authentification" rows="2" cols="70">{{ pg.authentification if pg else "" }}</textarea></div>
+    <div class="field" style="flex-basis:100%;"><label for="pg-subst">Substitution / adultération</label>
+      <textarea id="pg-subst" name="substitution_adulteration" rows="2" cols="70">{{ pg.substitution_adulteration if pg else "" }}</textarea></div>
+    <div class="field"><label for="pg-sech">Séchage</label>
+      <input type="text" id="pg-sech" name="sechage" value="{{ pg.sechage if pg else "" }}"></div>
+    <div class="field"><label for="pg-stock">Stockage</label>
+      <input type="text" id="pg-stock" name="stockage" value="{{ pg.stockage if pg else "" }}"></div>
+    <div class="field" style="flex-basis:100%;"><label for="pg-prep">Préparation</label>
+      <textarea id="pg-prep" name="preparation" rows="2" cols="70">{{ pg.preparation if pg else "" }}</textarea></div>
+    <div class="field"><label for="pg-source">Source</label>
+      <input type="text" id="pg-source" name="source" value="{{ pg.source if pg else "" }}"></div>
+    <button type="submit">Enregistrer la fiche pharmacognosie</button>
+  </form>
+  <p class="muted">Sections non renseignées : affichées « non renseignée », jamais inventées.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Recherche par nom — Données terrain{% endblock %}
+{% block content %}
+<h1>Recherche par nom</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — recherche dans les noms
+scientifiques, les synonymes et les <strong>noms vernaculaires</strong> enregistrés
+(« neem », « karité »…).</p>
+
+<div class="card">
+  <form method="get" action="/recherche-terrain" class="inline">
+    <div class="field"><label for="q">Nom recherché</label>
+      <input type="text" id="q" name="q" value="{{ q }}" placeholder="ex. neem, karité, Moringa oleifera" size="40"></div>
+    <button type="submit">Rechercher</button>
+  </form>
+</div>
+
+{% if q %}
+<h2>Résultats pour « {{ q }} » ({{ resultats|length }})</h2>
+{% if resultats %}
+<table>
+  <tr><th>Plante</th><th>Motif de correspondance</th><th>Détail</th><th></th></tr>
+  {% for r in resultats %}
+  <tr>
+    <td><strong><em>{{ r.scientific_name }}</em></strong></td>
+    <td><span class="badge">{{ libelles_motif.get(r.motif, r.motif) }}</span></td>
+    <td>{{ r.detail }}</td>
+    <td><a href="/plantes/{{ r.plant_id }}/terrain">Données terrain →</a></td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="muted">Ordre de priorité : nom exact → nom normalisé → synonyme → nom vernaculaire → correspondance partielle.</p>
+{% else %}
+<p class="muted">Aucune plante trouvée pour « {{ q }} ». Vérifiez l'orthographe ou
+<a href="/plantes">parcourez la liste des plantes</a>.</p>
+{% endif %}
+{% endif %}
+{% endblock %}
