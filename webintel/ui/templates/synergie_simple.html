@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle analyse de synergie (simplifiée){% endblock %}
+{% block content %}
+<h1>Nouvelle analyse de synergie — mode simplifié</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong></p>
+<p><span class="badge badge-experimental">{{ badge_prive }}</span>
+<span class="muted">Vos mesures restent privées au projet.</span></p>
+<p class="alert-error"><strong>Résultat informatique.</strong> L'analyse décrit
+uniquement les écarts entre vos mesures et l'attente du modèle choisi : elle ne
+démontre aucune synergie pharmacologique et ne se prononce pas sur la sécurité
+d'emploi d'une association.</p>
+
+{% if erreur %}
+<div class="alert-error"><strong>{{ erreur }}</strong>
+{% if detail %}<br>{{ detail }}{% endif %}</div>
+{% endif %}
+
+<form method="post" action="/synergie/nouvelle">
+  <div class="card">
+    <h2>1. Nom de l'analyse</h2>
+    <p><label>Nom<br>
+      <input type="text" name="nom" size="60" value="{{ form.nom or '' }}"
+             placeholder="Ex. : Synergie quercétine + lutéoline"></label></p>
+  </div>
+
+  <div class="card">
+    <h2>2. Méthode</h2>
+    {% for f in fiches %}
+    <p><label style="display:block;border:1px solid #ccc;border-radius:6px;padding:.6em;margin:.4em 0;cursor:pointer">
+      <input type="radio" name="methode" value="{{ f.nom }}"
+             {% if (form.methode or 'bliss') == f.nom %}checked{% endif %}>
+      <strong>{{ f.nom|upper }}</strong> — {{ descriptions.get(f.nom, "") }}<br>
+      <span class="muted"><code>{{ f.formule }}</code><br>
+      Données requises : {{ f.donnees_requises|join(", ") }}</span>
+    </label></p>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <h2>3. Molécule A — courbe dose / réponse</h2>
+    <p><label>Nom de la molécule A<br>
+      <input type="text" name="nom_a" size="40" value="{{ form.nom_a or '' }}" placeholder="Ex. : Quercétine"></label></p>
+    <table id="table_a">
+      <tr><th>Dose</th><th>Réponse mesurée</th></tr>
+      <tr><td><input type="text" name="a_dose" size="12" placeholder="ex. 10"></td>
+          <td><input type="text" name="a_reponse" size="12" placeholder="ex. 0.35"></td></tr>
+    </table>
+    <p><button type="button" data-ajouter-ligne data-table="table_a" data-noms="a_dose,a_reponse">+ Ajouter une ligne</button></p>
+    <p class="muted">Réponses en fraction (0–1) ou en pourcentage (0–100).</p>
+  </div>
+
+  <div class="card">
+    <h2>4. Molécule B — courbe dose / réponse</h2>
+    <p><label>Nom de la molécule B<br>
+      <input type="text" name="nom_b" size="40" value="{{ form.nom_b or '' }}" placeholder="Ex. : Lutéoline"></label></p>
+    <table id="table_b">
+      <tr><th>Dose</th><th>Réponse mesurée</th></tr>
+      <tr><td><input type="text" name="b_dose" size="12" placeholder="ex. 20"></td>
+          <td><input type="text" name="b_reponse" size="12" placeholder="ex. 0.40"></td></tr>
+    </table>
+    <p><button type="button" data-ajouter-ligne data-table="table_b" data-noms="b_dose,b_reponse">+ Ajouter une ligne</button></p>
+  </div>
+
+  <div class="card">
+    <h2>5. Combinaison A + B — mesures du mélange</h2>
+    <table id="table_c">
+      <tr><th>Dose A</th><th>Dose B</th><th>Réponse mesurée (mélange)</th></tr>
+      <tr><td><input type="text" name="c_dose_a" size="12" placeholder="ex. 10"></td>
+          <td><input type="text" name="c_dose_b" size="12" placeholder="ex. 20"></td>
+          <td><input type="text" name="c_reponse" size="12" placeholder="ex. 0.75"></td></tr>
+    </table>
+    <p><button type="button" data-ajouter-ligne data-table="table_c" data-noms="c_dose_a,c_dose_b,c_reponse">+ Ajouter une ligne</button></p>
+    <p class="muted"><strong>Bliss / HSA :</strong> chaque ligne de combinaison doit
+    reprendre <em>exactement</em> une dose mesurée dans le tableau « Molécule A »
+    et une dose mesurée dans le tableau « Molécule B » (les réponses individuelles
+    sont alors retrouvées automatiquement). <strong>Loewe / ZIP :</strong> au
+    moins 4 points par courbe individuelle + au moins un point de mélange
+    (les courbes sont ajustées automatiquement).</p>
+  </div>
+
+  <p><button type="submit">Lancer l'analyse</button>
+     <a href="/combinaisons">Annuler</a></p>
+</form>
+
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/synergie_simple.js"></script>
+{% endblock %}

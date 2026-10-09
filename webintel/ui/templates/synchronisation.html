@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Synchronisation{% endblock %}
+{% block content %}
+<h1>🔄 Synchronisation</h1>
+{% if bandeau %}<div class="card" style="border-left:4px solid var(--warn);"><p>⚠️ {{ bandeau }}</p></div>{% endif %}
+{% if message %}<div class="card" style="border-left:4px solid var(--ok);"><p>{{ message }}</p></div>{% endif %}
+{% if erreur %}<div class="card" style="border-left:4px solid var(--bad);"><p>❌ {{ erreur }}</p></div>{% endif %}
+
+<p class="muted">File des modifications effectuées <strong>hors connexion</strong> — chaque entrée
+attend d'être envoyée au dépôt distant. <strong>Règle absolue : jamais d'écrasement silencieux.</strong>
+Tout conflit exige votre choix explicite (local / distant / fusion), journalisé.</p>
+
+<div class="card">
+  <h2>État de la file</h2>
+  <p>
+    {% for code, (label, classe) in libelles_statut.items() %}
+    <a class="badge {{ classe }}" href="/synchronisation?statut={{ code }}" style="text-decoration:none;">{{ label }} : {{ compteurs[code] }}</a>
+    {% endfor %}
+    <a class="badge muted" href="/synchronisation" style="text-decoration:none;">Tout voir</a>
+  </p>
+  <form method="post" action="/synchronisation/action" style="display:inline;">
+    <button class="badge ok" type="submit" name="action" value="synchroniser" style="cursor:pointer;border:none;">⬆ Synchroniser maintenant</button>
+    <button class="badge warn" type="submit" name="action" value="relancer" style="cursor:pointer;border:none;">↻ Relancer les échecs</button>
+    <button class="badge muted" type="submit" name="action" value="vider" style="cursor:pointer;border:none;">🧹 Vider les envoyés</button>
+  </form>
+  <p class="muted">Dépôt distant : <code>{{ depot_base }}</code> (dossier « serveur » — copiable sur clé USB pour synchroniser sans réseau).</p>
+</div>
+
+<div class="card">
+  <h2>Entrées {% if filtre %}— {{ libelles_statut[filtre][0] }}{% endif %}</h2>
+  {% if not lignes %}
+  <p class="muted">File vide. Vos modifications hors connexion apparaîtront ici.</p>
+  {% else %}
+  <table>
+    <thead><tr><th>#</th><th>Entité</th><th>Opération</th><th>Auteur</th><th>Créée le</th><th>Tentatives</th><th>Statut</th><th>Détail</th></tr></thead>
+    <tbody>
+    {% for l in lignes %}
+    <tr>
+      <td>{{ l.id }}</td>
+      <td>{{ libelles_entite.get(l.entity_type, l.entity_type) }} #{{ l.entity_id }}</td>
+      <td>{{ libelles_operation.get(l.operation, l.operation) }}</td>
+      <td>{{ l.auteur or "—" }}</td>
+      <td>{{ l.created_at|date_courte }}</td>
+      <td>{{ l.tentative }}</td>
+      <td><span class="badge {{ libelles_statut[l.statut][1] }}">{{ libelles_statut[l.statut][0] }}</span></td>
+      <td>
+        {% if l.statut == "conflit" %}
+        <a class="badge bad" href="/synchronisation/conflits/{{ l.id }}" style="text-decoration:none;">⚠ Résoudre le conflit</a>
+        {% elif l.erreur %}<span class="muted" title="{{ l.erreur }}">voir erreur</span>
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>📡 Réseau</h2>
+  <p>Mode hors-ligne : <strong>{{ "ACTIF" if hors_ligne else "inactif" }}</strong>
+  <span class="muted">(les connecteurs externes affichent alors un message explicite et n'essaient aucun accès réseau ; l'usage local n'est jamais bloqué)</span></p>
+  <form method="post" action="/synchronisation/action" style="display:inline;">
+    <button class="badge warn" type="submit" name="action" value="hors_ligne_on" style="cursor:pointer;border:none;">Activer le mode hors-ligne</button>
+    <button class="badge ok" type="submit" name="action" value="hors_ligne_off" style="cursor:pointer;border:none;">Désactiver</button>
+    <button class="badge muted" type="submit" name="action" value="hors_ligne_auto" style="cursor:pointer;border:none;">Suivre WEBINTEL_HORS_LIGNE</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>💾 Sauvegarde / restauration</h2>
+  <p class="muted">Exportation complète du projet (données scientifiques, collectes, file — <strong>sans les secrets</strong>)
+  dans un ZIP versionné avec vérification d'intégrité (SHA-256). Restauration sur une autre installation compatible,
+  avec rapport (créés / mis à jour / ignorés / conflits).</p>
+  <form method="post" action="/sauvegarde/exporter" style="display:inline;">
+    <button class="badge ok" type="submit" style="cursor:pointer;border:none;">⬇ Exporter le projet (ZIP)</button>
+  </form>
+  <form method="post" action="/sauvegarde/importer" enctype="multipart/form-data" style="display:inline;margin-left:1rem;">
+    <input type="file" name="fichier" accept=".zip" required>
+    <label><input type="checkbox" name="forcer" value="oui"> écraser explicitement les lignes différentes</label>
+    <button class="badge warn" type="submit" style="cursor:pointer;border:none;">⬆ Restaurer</button>
+  </form>
+</div>
+{% endblock %}

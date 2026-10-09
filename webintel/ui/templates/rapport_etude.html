@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Rapport — {{ etude.nom }}{% endblock %}
+
+{% macro rendre(v) -%}
+{% if v is none %}<em class="muted">—</em>
+{% elif v is mapping %}
+<dl class="kv">
+{% for k, val in v.items() %}<dt>{{ k }}</dt><dd>{{ rendre(val) }}</dd>{% endfor %}
+</dl>
+{% elif v is sequence and v is not string %}
+<ul>{% for elt in v %}<li>{{ rendre(elt) }}</li>{% endfor %}</ul>
+{% else %}{{ v }}{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<h1>Rapport scientifique — {{ etude.nom }}</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> ·
+Étude #{{ etude.id }} · Statut : {{ etude.statut }}</p>
+
+{% if not genere %}
+<div class="card">
+  <h2>Générer le rapport</h2>
+  <p>Le rapport assemble, via le code d'export existant : titre, chercheur,
+  date, plante(s), molécule(s), sources, publications, méthodes, paramètres,
+  résultats, analyse statistique, limites, hypothèses, références, versions
+  des logiciels et moteurs, empreintes des données.</p>
+  <p class="alert-error"><strong>Avertissement.</strong> {{ avertissement }}</p>
+  <form method="post" action="/etudes/{{ etude.id }}/rapport">
+    <p><button type="submit">Créer le rapport</button>
+       <a href="/combinaisons">Annuler</a></p>
+  </form>
+</div>
+{% else %}
+<p><span class="badge badge-prediction">Prédiction</span>
+<span class="muted">Dossier informatique — hypothèses à vérifier expérimentalement.</span></p>
+<p>Télécharger :
+<a href="/etudes/{{ etude.id }}/rapport/telecharger?format=html">HTML</a> ·
+<a href="/etudes/{{ etude.id }}/rapport/telecharger?format=markdown">Markdown</a> ·
+<a href="/etudes/{{ etude.id }}/rapport/telecharger?format=pdf">PDF</a></p>
+
+<div class="card">
+  <h2>Identification</h2>
+  <dl class="kv">
+    <dt>Titre</dt><dd>{{ rapport.titre }}</dd>
+    <dt>Chercheur</dt><dd>{{ rapport.chercheur }}</dd>
+    <dt>Date de création</dt><dd>{{ rapport.date }}</dd>
+    <dt>Empreinte des entrées (SHA-256)</dt><dd><code>{{ rapport.inputs_hash }}</code></dd>
+    <dt>Niveau de données</dt><dd>{{ rapport.data_level }}</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h2>Plante étudiée</h2>
+  {% if rapport.plante %}
+  <p><strong>{{ rapport.plante.nom }}</strong>
+  {% if rapport.plante.famille %}({{ rapport.plante.famille }}){% endif %}
+  {% if rapport.plante.partie %}— partie : {{ rapport.plante.partie }}{% endif %}</p>
+  {% else %}<p class="muted">Aucune plante renseignée pour cette étude.</p>{% endif %}
+  <h2>Molécules ({{ rapport.molecules|length }})</h2>
+  {% if rapport.molecules %}
+  <ul>{% for m in rapport.molecules %}
+    <li><strong>{{ m.nom }}</strong>{% if m.formule %} — {{ m.formule }}{% endif %}{% if m.classe %} ({{ m.classe }}){% endif %}</li>
+  {% endfor %}</ul>
+  {% else %}<p class="muted">Aucune molécule renseignée.</p>{% endif %}
+  {% if rapport.cible %}<p><strong>Cible :</strong> {{ rapport.cible }}</p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>Sources &amp; publications ({{ rapport.publications|length }})</h2>
+  {% if rapport.publications %}
+  <ul>{% for p in rapport.publications %}
+    <li>{{ p.titre or "—" }}{% if p.auteurs %} — {{ p.auteurs|join(", ") }}{% endif %}{% if p.annee %} ({{ p.annee }}){% endif %}{% if p.doi %} — DOI : {{ p.doi }}{% endif %}</li>
+  {% endfor %}</ul>
+  {% else %}<p class="muted">Aucune publication de référence associée.</p>{% endif %}
+  <h2>Méthodes &amp; paramètres</h2>
+  {{ rendre(rapport.parametres) }}
+</div>
+
+<div class="card">
+  <h2>Données de laboratoire associées <span class="badge badge-experimental">{{ badge_prive }}</span></h2>
+  {% if rapport.jeux_donnees %}
+  <ul>{% for j in rapport.jeux_donnees %}
+    <li>{{ j.source }} — empreinte {{ j.empreinte }}… ({{ j.date }})</li>
+  {% endfor %}</ul>
+  <p class="muted">Données privées : visibles uniquement dans ce projet,
+  jamais fusionnées automatiquement aux données publiques.</p>
+  {% else %}<p class="muted">Aucun jeu de données du laboratoire associé à cette étude.</p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>Résultats — dossier en 12 points</h2>
+  {% if rapport.score %}<p><strong>Score informatique :</strong> {{ rapport.score.get("score") }}<br>
+  <span class="muted">{{ rapport.score.get("formule") }} — {{ rapport.score.get("note") }}</span></p>{% endif %}
+  {% for s in rapport.sections %}
+  <h3>{{ s.titre }}</h3>
+  {{ rendre(s) }}
+  {% endfor %}
+</div>
+
+<div class="card">
+  <h2>Analyse statistique</h2>
+  {% if rapport.score %}
+  <p>Score informatique : <strong>{{ rapport.score.get("score") }}</strong>
+  ({{ rapport.score.get("formule") }}). {{ rapport.score.get("note") }}</p>
+  <p class="muted">Il s'agit d'un indicateur de priorisation informatique,
+  pas d'une mesure d'effet pharmacologique.</p>
+  {% else %}<p class="muted">Aucun score calculé pour cette étude.</p>{% endif %}
+  <h2>Simulations &amp; docking <span class="muted">(niveau projet)</span></h2>
+  <p>Simulations du projet : {{ rapport.simulations_projet|length }} ·
+     Jobs docking du projet : {{ rapport.docking_projet|length }}
+     <span class="muted">(aucun lien étude↔simulation n'est supposé ici)</span></p>
+</div>
+
+<div class="card">
+  <h2>Limites</h2>
+  {% if rapport.limites %}<ul>{% for l in rapport.limites %}<li>{{ l }}</li>{% endfor %}</ul>
+  {% else %}<p class="muted">—</p>{% endif %}
+  <h2>Hypothèses</h2>
+  {% if rapport.hypotheses %}<ul>{% for h in rapport.hypotheses %}<li>{{ h }}</li>{% endfor %}</ul>
+  {% else %}<p class="muted">—</p>{% endif %}
+  <h2>Conclusion du dossier</h2>
+  <p>{{ rapport.conclusion or "—" }}</p>
+</div>
+
+<div class="card">
+  <h2>Références</h2>
+  {% if rapport.references %}
+  <ul>{% for r in rapport.references %}
+    <li>[{{ r.get("type") }}] {{ r.get("titre") or r.get("publication") or r.get("compose") or "—" }}{% if r.get("doi") %} (DOI : {{ r.get("doi") }}){% endif %}</li>
+  {% endfor %}</ul>
+  {% else %}<p class="muted">Aucune référence.</p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>Versions &amp; traçabilité</h2>
+  <dl class="kv">
+    <dt>WebIntel</dt><dd>{{ rapport.webintel_version }}</dd>
+    <dt>Moteurs scientifiques</dt><dd>{{ rendre(rapport.moteurs) }}</dd>
+    <dt>Empreinte des entrées</dt><dd><code>{{ rapport.inputs_hash }}</code></dd>
+  </dl>
+  <p class="alert-error"><strong>{{ rapport.avertissement }}</strong></p>
+</div>
+
+<p><a href="/etudes/{{ etude.id }}/historique">Voir l'historique versionné</a> ·
+   <a href="/combinaisons">← Retour aux combinaisons</a></p>
+{% endif %}
+{% endblock %}

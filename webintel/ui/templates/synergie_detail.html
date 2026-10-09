@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Analyse {{ analyse.nom }}{% endblock %}
+
+{% macro rendre(v) -%}
+{% if v is none %}<em class="muted">—</em>
+{% elif v is mapping %}
+<dl class="kv">
+{% for k, val in v.items() %}<dt>{{ k }}</dt><dd>{{ rendre(val) }}</dd>{% endfor %}
+</dl>
+{% elif v is sequence and v is not string %}
+<ul>{% for elt in v %}<li>{{ rendre(elt) }}</li>{% endfor %}</ul>
+{% else %}{{ v }}{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<h1>Analyse de synergie — {{ analyse.nom }}</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> ·
+Méthode : <strong>{{ analyse.methode|upper }}</strong> ·
+Statut : {{ analyse.statut }} ·
+{% if analyse.is_private %}<span class="badge">Confidentiel (labo)</span>
+{% else %}<span class="badge">Public</span>{% endif %}</p>
+<p class="alert-error"><strong>Résultat expérimental fourni par le
+laboratoire.</strong> L'interprétation ci-dessous est une description
+statistique des écarts observés, pas une recommandation.</p>
+
+<div class="card">
+  <h2>Formule</h2>
+  <p><code>{{ resultat.formule }}</code></p>
+  <h2>Interprétation</h2>
+  <p>{{ resultat.interpretation }}</p>
+  {% if resultat.graphe_svg %}
+  <h2>Graphe</h2>
+  {{ resultat.graphe_svg|safe }}
+  {% endif %}
+  <h2>Calcul</h2>
+  {{ rendre(resultat.calcul) }}
+  <h2>Limites</h2>
+  <ul>{% for l in resultat.limites %}<li>{{ l }}</li>{% endfor %}</ul>
+</div>
+
+<h2>Provenance</h2>
+<div class="card">{{ rendre(analyse.provenance) }}</div>
+
+<p><a href="/combinaisons">← Retour aux combinaisons</a></p>
+{% endblock %}

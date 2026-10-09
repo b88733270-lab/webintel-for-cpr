@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Résoudre le conflit #{{ ligne.id }}{% endblock %}
+{% block content %}
+<h1>⚠ Conflit de synchronisation #{{ ligne.id }}</h1>
+<p class="muted">Entité <strong>{{ libelles_entite.get(ligne.entity_type, ligne.entity_type) }} #{{ ligne.entity_id }}</strong>
+({{ libelles_operation.get(ligne.operation, ligne.operation) }}) — le dépôt distant a été modifié
+après votre saisie locale. <strong>Rien n'a été écrasé.</strong> Choisissez explicitement ci-dessous ;
+votre choix sera journalisé (qui, quand, ancienne → nouvelle valeur).</p>
+{% if erreur %}<div class="card" style="border-left:4px solid var(--bad);"><p>❌ {{ erreur }}</p></div>{% endif %}
+{% if distant_supprime %}
+<div class="card" style="border-left:4px solid var(--bad);"><p>⚠️ <strong>L'entité a été supprimée du dépôt distant</strong>
+pendant que vous la modifiiez localement. « Adopter la version distante » la supprimera aussi localement.</p></div>
+{% endif %}
+
+<div class="grid" style="grid-template-columns:1fr 1fr;gap:1rem;">
+<div class="card">
+  <h2>🟡 LOCAL (votre saisie)</h2>
+  <table><thead><tr><th>Champ</th><th>Valeur</th></tr></thead><tbody>
+  {% for r in comparaison %}
+  <tr{% if r.different %} style="background:#fff7e6;"{% endif %}><td><code>{{ r.champ }}</code></td><td>{{ r.local if r.local is not none else "—" }}</td></tr>
+  {% endfor %}
+  </tbody></table>
+</div>
+<div class="card">
+  <h2>🔵 DISTANT (serveur)</h2>
+  <table><thead><tr><th>Champ</th><th>Valeur</th></tr></thead><tbody>
+  {% for r in comparaison %}
+  <tr{% if r.different %} style="background:#eef6ff;"{% endif %}><td><code>{{ r.champ }}</code></td><td>{{ r.distant if r.distant is not none else "—" }}</td></tr>
+  {% endfor %}
+  </tbody></table>
+</div>
+</div>
+
+<div class="card">
+  <h2>Résolution explicite</h2>
+  <form method="post" action="/synchronisation/conflits/{{ ligne.id }}/resoudre">
+    <p><label><input type="radio" name="choix" value="local" checked>
+      <strong>Garder la version locale</strong> — l'envoyer au dépôt distant (écrase le distant, explicitement).</label></p>
+    <p><label><input type="radio" name="choix" value="distant">
+      <strong>Adopter la version distante</strong> — remplacer la version locale (la saisie locale est conservée dans le journal).</label></p>
+    <p><label><input type="radio" name="choix" value="fusion">
+      <strong>Fusion manuelle</strong> — éditez les valeurs ci-dessous (JSON), appliquées des deux côtés.</label></p>
+    <p><textarea name="fusion_json" rows="12" cols="80" style="width:100%;font-family:monospace;">{{ fusion_json }}</textarea></p>
+    <p><label>Commentaire (optionnel) : <input type="text" name="commentaire" size="60" placeholder="pourquoi ce choix ?"></label></p>
+    <p><button class="badge ok" type="submit" style="cursor:pointer;border:none;">✓ Résoudre et journaliser</button>
+    <a class="badge muted" href="/synchronisation" style="text-decoration:none;">← Retour (résoudre plus tard)</a></p>
+  </form>
+</div>
+{% endblock %}

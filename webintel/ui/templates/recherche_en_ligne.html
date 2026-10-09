@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Recherche en ligne{% endblock %}
+{% block content %}
+<h1>🌐 Recherche en ligne</h1>
+<p class="muted">Interrogez les sources externes PubChem (molécules), GBIF (plantes) et PubMed (publications).
+Les résultats s'affichent <strong>avant</strong> tout import, avec leur source et leur licence.
+Seul le terme recherché est transmis à la source externe — aucune donnée de laboratoire
+ou de projet ne quitte WebIntel. Les données importées sont des
+<strong>données normalisées</strong>, jamais des preuves.</p>
+
+<div class="card" style="margin-bottom:1rem;">
+  <form method="get" action="/recherche-en-ligne" role="search">
+    <label for="q-ligne"><strong>Terme recherché</strong></label><br>
+    <input id="q-ligne" type="search" name="q" size="48" value="{{ q|e }}"
+           placeholder="Nom d'une molécule, nom scientifique d'une plante, mots-clés…">
+    <select name="source" aria-label="Source externe">
+      <option value="tout" {% if source_demandee == 'tout' or not source_demandee %}selected{% endif %}>Toutes les sources</option>
+      <option value="pubchem" {% if source_demandee == 'pubchem' %}selected{% endif %}>PubChem (molécule)</option>
+      <option value="gbif" {% if source_demandee == 'gbif' %}selected{% endif %}>GBIF (plante)</option>
+      <option value="pubmed" {% if source_demandee == 'pubmed' %}selected{% endif %}>PubMed (publications)</option>
+    </select>
+    <button type="submit">Rechercher en ligne</button>
+  </form>
+  <p class="muted" style="margin-top:0.4rem;">Lecture seule. Vous décidez ensuite, résultat par résultat, ce qui est importé dans votre base locale.</p>
+</div>
+
+{% if erreur_globale %}
+<div class="alert-error"><strong>Recherche en ligne impossible.</strong> {{ erreur_globale }}</div>
+{% endif %}
+
+{% if message %}
+<div class="card"><p>{{ message }}</p></div>
+{% endif %}
+
+{% if importes %}
+<div class="card">
+  <h2>Publications importées dans votre base locale</h2>
+  <ul>
+    {% for imp in importes %}
+    <li><strong>{{ imp.titre }}</strong>
+      {% if imp.detail %}<span class="muted">— {{ imp.detail }}</span>{% endif %}
+      <br><a href="/recherche-universelle?q={{ imp.titre|urlencode }}">Voir dans la recherche locale →</a>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="muted">Source : PubMed — provenance enregistrée pour chaque publication (connecteur, licence, date d'import).</p>
+</div>
+{% endif %}
+
+{% if aperçus is not none and aperçus %}
+{% for apercu in aperçus %}
+<div class="card">
+  <h2>{{ apercu.nom_affichage }}</h2>
+  <p class="muted">Source : {{ apercu.nom_affichage }} — Licence : {{ apercu.licence }}
+    {% if apercu.description %}<br>{{ apercu.description }}{% endif %}
+  </p>
+  {% if apercu.erreur %}
+  <div class="alert-error"><strong>{{ apercu.nom_affichage }} :</strong> {{ apercu.erreur }}</div>
+  {% elif not apercu.resultats %}
+  <p class="muted">Aucun résultat en ligne chez {{ apercu.nom_affichage }} pour « {{ q|e }} ».</p>
+  {% else %}
+  <ul>
+    {% for r in apercu.resultats %}
+    <li><strong>{{ r.titre }}</strong>
+      {% if r.detail %}<span class="muted">— {{ r.detail }}</span>{% endif %}
+      {% if r.identifiant %}<br><span class="muted">{{ r.identifiant }}</span>{% endif %}
+      <br><span class="muted">Source : {{ apercu.nom_affichage }} ({{ apercu.licence }})</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <form method="post" action="/recherche-en-ligne/importer">
+    <input type="hidden" name="connecteur" value="{{ apercu.nom }}">
+    <input type="hidden" name="q" value="{{ q|e }}">
+    <button type="submit">Importer depuis {{ apercu.nom_affichage }}</button>
+  </form>
+  <p class="muted">L'import enregistre la provenance (source, licence, date) et crée la fiche locale correspondante.</p>
+  {% endif %}
+</div>
+{% endfor %}
+{% elif q and not erreur_globale %}
+<p class="muted">Lancez la recherche pour voir les résultats en ligne avant import.</p>
+{% endif %}
+
+<p><a href="/recherche-universelle{% if q %}?q={{ q|urlencode }}{% endif %}">← Retour à la recherche locale</a></p>
+{% endblock %}

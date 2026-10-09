@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Simulations{% endblock %}
+
+{% macro rendre(v) -%}
+{% if v is none %}<em class="muted">—</em>
+{% elif v is mapping %}
+<dl class="kv">
+{% for k, val in v.items() %}<dt>{{ k }}</dt><dd>{{ rendre(val) }}</dd>{% endfor %}
+</dl>
+{% elif v is sequence and v is not string %}
+<ul>{% for elt in v %}<li>{{ rendre(elt) }}</li>{% endfor %}</ul>
+{% else %}{{ v }}{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<h1>Simulations</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — exécutez un moteur
+de simulation et obtenez un rapport structuré. Rappel :</p>
+<p class="alert-error"><strong>Simulation — à confirmer expérimentalement.</strong>
+Un résultat de simulation est une prédiction informatique, jamais une preuve
+expérimentale.</p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+{% if rapport %}
+<div class="card" style="border:2px solid #b45309;">
+  <h2>Rapport de simulation #{{ simulation_id }} — {{ rapport.engine_name }}
+    <small>v{{ rapport.engine_version }}</small>
+    <span class="badge" style="background-color:#8250df;color:#fff;border:none;">Prédiction — à confirmer expérimentalement</span></h2>
+  <p class="alert-error"><strong>{{ rapport.avertissement }}</strong></p>
+  <p class="muted">Généré le {{ rapport.genere_le|date_courte }} · empreinte des entrées :
+    <code>{{ rapport.input_hash }}</code></p>
+  {% for section in ["INPUTS", "METHOD", "PARAMETERS", "OUTPUTS", "REFERENCES", "LIMITATIONS"] %}
+  <h3>{{ section }}</h3>
+  {{ rendre(rapport[section]) }}
+  {% endfor %}
+  <p><a href="/simulations/{{ simulation_id }}/rapport">Voir le rapport complet</a> ·
+     <a href="/simulations/{{ simulation_id }}/rapport?format=markdown">⬇ Markdown</a></p>
+</div>
+{% endif %}
+
+<h2>Moteurs ({{ moteurs|length }})</h2>
+{% for m in moteurs %}
+<div class="card" style="margin:8px 0;">
+  <p><strong>{{ m.nom }}</strong> <small class="muted">v{{ m.version }}</small>
+    {% if m.disponible %}
+    <span class="badge" style="background-color:#1a7f37;color:#fff;border:none;">Disponible</span>
+    {% else %}
+    <span class="badge" style="background-color:#cf222e;color:#fff;border:none;">Indisponible</span>
+    {% endif %}</p>
+  <p>{{ m.description }}</p>
+  {% if not m.disponible and m.raison %}<p class="muted">Raison : {{ m.raison }}</p>{% endif %}
+  {% if m.entrees %}
+  <p><strong>Entrées attendues :</strong></p>
+  <dl class="kv">
+    {% for nom, desc in m.entrees.items() %}<dt><code>{{ nom }}</code></dt><dd>{{ desc }}</dd>{% endfor %}
+  </dl>
+  {% endif %}
+  {% if m.parametres %}
+  <p><strong>Paramètres :</strong></p>
+  <dl class="kv">
+    {% for nom, spec in m.parametres.items() %}
+    <dt><code>{{ nom }}</code></dt>
+    <dd>{{ spec.description }} <span class="muted">(défaut : {{ spec.default }})</span></dd>
+    {% endfor %}
+  </dl>
+  {% endif %}
+  {% if m.limitations %}
+  <p><strong>Limitations :</strong></p>
+  <ul>{% for lim in m.limitations %}<li>{{ lim }}</li>{% endfor %}</ul>
+  {% endif %}
+</div>
+{% endfor %}
+
+{% if moteurs_disponibles %}
+<h2 id="nouveau">Lancer une simulation</h2>
+<div class="card">
+  <form method="post" action="/simulations/run">
+    <div class="field"><label for="moteur">Moteur</label>
+      <select id="moteur" name="moteur">
+        {% for m in moteurs_disponibles %}
+        <option value="{{ m.nom }}" {% if form.moteur == m.nom %}selected{% endif %}>{{ m.nom }} — {{ m.description[:80] }}</option>
+        {% endfor %}
+      </select></div>
+    <div class="field"><label for="nom">Nom de la simulation</label>
+      <input type="text" id="nom" name="nom" value="{{ form.nom }}" placeholder="ex. Statistiques IC50 quercétine"></div>
+    <div class="field"><label for="description">Description (optionnel)</label>
+      <input type="text" id="description" name="description" value="{{ form.description }}" placeholder="contexte, hypothèse…"></div>
+    <div class="field"><label for="inputs">Entrées (JSON)</label>
+      <textarea id="inputs" name="inputs" rows="6" cols="60" placeholder='{"observations": [{"valeur": 12.5}, {"valeur": 13.1}]}'>{{ form.inputs }}</textarea></div>
+    <div class="field"><label for="parameters">Paramètres (JSON, optionnel)</label>
+      <textarea id="parameters" name="parameters" rows="3" cols="60" placeholder='{"niveau_confiance": 0.95}'>{{ form.parameters }}</textarea></div>
+    <button type="submit">Exécuter</button>
+  </form>
+  <p class="muted">Le résultat est enregistré comme simulation du projet
+  (niveau « prédiction ») et le rapport complet s'affiche ci-dessus, avec
+  l'avertissement « Simulation — à confirmer expérimentalement ».</p>
+</div>
+{% else %}
+<p class="alert-error">Aucun moteur disponible pour le moment.</p>
+{% endif %}
+
+<h2>Simulations précédentes ({{ simulations_precedentes|length }})</h2>
+<p class="muted">Journal d'audit append-only : chaque exécution est immuable
+(qui, quand, empreinte SHA-256 des entrées, version du moteur). Pour corriger,
+relancez une nouvelle simulation.</p>
+{% if simulations_precedentes %}
+<table>
+  <thead><tr><th>#</th><th>Nom</th><th>Moteur</th><th>Niveau</th><th>Empreinte</th><th>Exécutée par</th><th>Rapport</th></tr></thead>
+  <tbody>
+  {% for s in simulations_precedentes %}
+  <tr>
+    <td>{{ s.id }}</td>
+    <td>{{ s.name }}</td>
+    <td><code>{{ s.engine_name }}</code> <small class="muted">v{{ s.engine_version }}</small></td>
+    <td><span class="badge" style="background-color:#8250df;color:#fff;border:none;">Prédiction</span></td>
+    <td><code>{{ s.input_hash }}</code></td>
+    <td class="muted">{{ s.executed_by }}</td>
+    <td><a href="/simulations/{{ s.id }}/rapport">Voir</a> · <a href="/simulations/{{ s.id }}/rapport?format=markdown">⬇</a></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">Aucune simulation enregistrée pour ce projet.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Plantes{% endblock %}
+{% block content %}
+<h1>Plantes étudiées</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — {{ total }} plante(s) référencée(s).</p>
+
+<div class="card">
+  {% if plantes %}
+  <table>
+    <tr><th>Nom scientifique</th><th>Famille</th><th>Composés rapportés</th></tr>
+    {% for p in plantes %}
+    <tr>
+      <td><a href="/plantes/{{ p.id }}"><em>{{ p.scientific_name }}</em></a></td>
+      <td>{{ p.family or "—" }}</td>
+      <td>{{ nb_composes.get(p.id, 0) }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p>
+    {% if page > 1 %}<a href="/plantes?page={{ page - 1 }}">← Précédent</a>{% endif %}
+    {% if page > 1 and page < nb_pages %} · {% endif %}
+    {% if page < nb_pages %}<a href="/plantes?page={{ page + 1 }}">Suivant →</a>{% endif %}
+    <span class="muted">(page {{ page }}/{{ nb_pages }})</span>
+  </p>
+  {% else %}<p class="muted">Aucune plante référencée pour l'instant.</p>{% endif %}
+</div>
+{% endblock %}

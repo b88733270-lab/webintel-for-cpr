@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Importer mes résultats (synergie){% endblock %}
+{% block content %}
+<h1>Importer mes résultats — analyse de synergie</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — MODE B :
+vos mesures expérimentales (dose-réponse), jamais des structures seules.
+Méthodes : Bliss, Loewe, HSA, ZIP.</p>
+<p class="alert-error"><strong>Données du laboratoire.</strong> Cochez
+« confidentiel » pour exclure l'analyse des exports publics.</p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<form method="post" action="/synergie/importer">
+  <p><label>Nom de l'analyse<br>
+    <input type="text" name="nom" value="{{ form.nom or '' }}" size="60"></label></p>
+  <p><label>Méthode<br>
+    <select name="methode">
+      {% for m in methodes %}
+      <option value="{{ m }}" {% if form.methode == m %}selected{% endif %}>{{ m|upper }}</option>
+      {% endfor %}
+    </select></label></p>
+  <p><label><input type="checkbox" name="is_private" checked>
+    Confidentiel (données du laboratoire — exclues des exports publics par défaut)</label></p>
+  <p><label>Données expérimentales (JSON)<br>
+    <textarea name="donnees" rows="14" cols="70">{{ form.donnees or '' }}</textarea></label></p>
+  <details><summary>Formats attendus par méthode</summary>
+  <pre>Bliss / HSA :
+{"points": [{"dose_a": 10, "dose_b": 20,
+             "reponse_a": 0.5, "reponse_b": 0.5, "reponse_ab": 0.9}]}
+Réponses en fraction (0–1) ou en pourcentage (0–100).
+
+Loewe :
+{"courbe_a_parametres": {"ic50": 10, "pente": 1},
+ "courbe_b_parametres": {"ic50": 20, "pente": 1},
+ "melanges": [{"dose_a": 5, "dose_b": 10, "reponse": 0.5}]}
+(ou "courbe_a": [{"dose":..,"reponse":..}, ...] avec ≥ 4 points :
+ la courbe de Hill est ajustée automatiquement)
+
+ZIP :
+{"courbe_a_parametres": {"ic50": 10, "pente": 2},
+ "courbe_b_parametres": {"ic50": 30, "pente": 1},
+ "melanges": [{"dose_a": 10, "dose_b": 30, "reponse": 0.9}]}
+Référence : Yadav et al. 2015, Comput. Struct. Biotechnol. J. 13:504–513.</pre>
+  </details>
+  <p><button type="submit">Analyser</button>
+     <a href="/combinaisons">Annuler</a></p>
+</form>
+{% endblock %}

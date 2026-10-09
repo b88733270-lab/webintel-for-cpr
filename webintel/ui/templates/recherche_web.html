@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Recherche Web{% endblock %}
+{% block content %}
+<h1>🌐 Recherche Web</h1>
+<p class="muted">Recherche généraliste sur le Web via plusieurs fournisseurs, avec <strong>fallback automatique</strong> : si un fournisseur échoue, le suivant prend le relais. Aucune clé API n'est requise pour démarrer (Wikipedia, DuckDuckGo, GitHub, actualités RSS) ; les fournisseurs à clé s'activent dans <a href="/parametres">Paramètres</a>.</p>
+
+<div class="card">
+  <form class="inline" method="get" action="/recherche-web">
+    <div class="field"><label for="q">Requête *</label>
+      <input type="search" id="q" name="q" required value="{{ q }}" placeholder="Ex. Burkina Faso économie numérique" size="42"></div>
+    <div class="field"><label for="langue">Langue</label>
+      <select id="langue" name="langue">
+        <option value="fr" {% if langue == "fr" %}selected{% endif %}>Français</option>
+        <option value="en" {% if langue == "en" %}selected{% endif %}>English</option>
+      </select></div>
+    <div class="field"><label for="limite">Résultats max</label>
+      <input type="number" id="limite" name="limite" min="1" max="50" value="{{ limite }}"></div>
+    <button type="submit">Rechercher sur le Web</button>
+  </form>
+  <p class="muted">Produit en ligne : sans connexion, cette recherche affiche une erreur explicite — elle n'est jamais présentée comme disponible hors ligne.</p>
+</div>
+
+{% if resultat %}
+<div class="card">
+  <h2>Résultats pour « {{ resultat.requete }} » ({{ resultat.resultats | length }})</h2>
+  <p class="muted">
+    Fournisseurs ayant répondu : {{ resultat.providers_utilises | join(", ") if resultat.providers_utilises else "aucun" }}.
+    {% if resultat.providers_en_echec %}En échec : {% for e in resultat.providers_en_echec %}{{ e.provider or e.nom or e }} ({{ e.erreur or e.message or e.code or "erreur" }}){% if not loop.last %}, {% endif %}{% endfor %}.{% endif %}
+    Durée : {{ resultat.duree_ms }} ms.
+  </p>
+  {% if resultat.resultats %}
+  <div class="grid">
+    {% for r in resultat.resultats %}
+    <div class="card">
+      <h3><a href="{{ r.url }}" rel="noopener noreferrer" target="_blank">{{ r.titre }}</a></h3>
+      {% if r.extrait %}<p>{{ r.extrait }}</p>{% endif %}
+      <p class="muted">Source : {{ r.source }}{% if r.date %} · {{ r.date }}{% endif %}{% if r.type %} · {{ r.type }}{% endif %}<br>{{ r.url }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>Aucun résultat obtenu pour cette requête.</p>
+    <p class="muted">Si tous les fournisseurs sont en échec, vérifiez la connexion Internet puis réessayez — aucun résultat n'est inventé.</p>
+    <p><a class="btn" href="/recherche-web?q={{ q | urlencode }}&langue={{ langue }}&limite={{ limite }}">Réessayer</a></p>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

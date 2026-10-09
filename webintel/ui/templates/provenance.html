@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Provenance du résultat{% endblock %}
+{% block content %}
+<h1>🔍 Traçabilité du résultat</h1>
+<p class="muted">
+  D'où vient ce résultat ? Qui l'a produit, avec quelles données, quelle
+  méthode, quelle version du moteur, quels paramètres et quand.
+  Une traçabilité complète est la condition d'une science reproductible.
+</p>
+
+{% for fiche in fiches %}
+  {% include "_provenance.html" %}
+{% endfor %}
+
+<p>
+  {% if retour_url %}<a href="{{ retour_url }}">← Retour au résultat</a>{% endif %}
+</p>
+{% endblock %}

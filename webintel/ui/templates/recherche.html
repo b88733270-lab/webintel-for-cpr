@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Recherche{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Recherche</h1>
+  <p class="muted">Projet : <strong>{{ project.name }}</strong> — recherchez dans les
+  entités collectées. Chaque résultat affiche son type, ses prix par source et
+  sa dernière observation datée.</p>
+</div>
+
+<div class="card">
+  <form class="inline" method="get" action="/recherche" data-search-progress>
+    <div class="field"><label for="q">Requête</label>
+      <input type="text" id="q" name="q" value="{{ q }}" placeholder="nom, marque, mot-clé…" size="35"></div>
+    <div class="field"><label for="type">Type</label>
+      <select id="type" name="type">
+        <option value="">Tous</option>
+        <option value="product" {% if type == "product" %}selected{% endif %}>Produit</option>
+        <option value="article" {% if type == "article" %}selected{% endif %}>Article</option>
+        <option value="company" {% if type == "company" %}selected{% endif %}>Entreprise</option>
+        <option value="webpage" {% if type == "webpage" %}selected{% endif %}>Page web</option>
+      </select></div>
+    <div class="field"><label for="min_price">Prix min</label>
+      <input type="number" id="min_price" name="min_price" value="{{ min_price }}" step="0.01" min="0"></div>
+    <div class="field"><label for="max_price">Prix max</label>
+      <input type="number" id="max_price" name="max_price" value="{{ max_price }}" step="0.01" min="0"></div>
+    <div class="field"><label for="domain">Domaine</label>
+      <input type="text" id="domain" name="domain" value="{{ domain }}" placeholder="exemple.fr"></div>
+    <button type="submit" data-needs-network>Rechercher</button>
+  </form>
+  <p class="muted" style="margin-top:.6rem;">Pour une recherche Web et scientifique
+  unifiée, utilisez la <a href="/recherche-universelle">recherche universelle</a>.
+  La recherche Web nécessite une connexion : hors-ligne, un message clair
+  s'affiche et rien n'est présenté comme disponible.</p>
+
+  <div id="recherche-offline" class="alert-error" role="alert" hidden>
+    <strong>Connexion indisponible.</strong> La recherche Web ne peut pas
+    démarrer hors-ligne. Vérifiez votre connexion, puis
+    <button type="button" class="btn btn-sm secondary" data-retry-search>Réessayer</button>
+  </div>
+
+  <div id="recherche-progression" hidden aria-live="polite">
+    <div class="loading-row"><span class="spinner" aria-hidden="true"></span>
+      <span data-step-status>Préparation de la recherche…</span></div>
+    <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Progression de la recherche">
+      <div style="width:0%"></div>
+    </div>
+    <ol class="steps">
+      <li><span class="step-num">1</span>Compréhension</li>
+      <li><span class="step-num">2</span>Découverte</li>
+      <li><span class="step-num">3</span>Collecte</li>
+      <li><span class="step-num">4</span>Analyse</li>
+      <li><span class="step-num">5</span>Vérification</li>
+      <li><span class="step-num">6</span>Synthèse</li>
+    </ol>
+    <p class="muted">Parcours de la requête : compréhension, découverte des
+    sources, collecte, analyse, vérification, puis synthèse sourcée. Les
+    résultats ne s'affichent qu'une fois la réponse reçue.</p>
+  </div>
+</div>
+
+{% if q %}
+<div class="card">
+  <h2>{{ count }} résultat(s) pour « {{ q }} »</h2>
+  {% if results %}
+  <div class="table-wrap">
+  <table class="responsive-cards"><thead><tr><th>Nom</th><th>Type</th><th>Prix (par source)</th><th>Domaine</th><th>Dernière vue</th></tr></thead>
+    <tbody>
+    {% for e in results %}
+    <tr><td data-label="Nom"><a href="/entites/{{ e.id }}">{{ e.name | truncate(60) }}</a></td>
+        <td data-label="Type"><span class="badge muted">{{ e.entity_type }}</span></td>
+        <td data-label="Prix (par source)">{% if e.prices %}{{ e.prices[0]|afficher_valeur }}{% if e.prices | length > 1 %} <span class="muted">({{ e.prices | length }} sources)</span>{% endif %}{% else %}—{% endif %}</td>
+        <td data-label="Domaine" class="muted">{{ e.domain or "—" }}</td>
+        <td data-label="Dernière vue" class="muted">{{ e.last_seen|date_courte }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-ico" aria-hidden="true">⌕</div>
+    <h3>Aucun résultat pour « {{ q }} »</h3>
+    <p class="muted">Aucune entité collectée ne correspond à ces critères.
+    Élargissez la requête, retirez un filtre, ou analysez une nouvelle URL.</p>
+    <p><a class="btn" href="/analyser">Analyser une URL</a>
+       <a class="btn secondary" href="/recherche">Réinitialiser les filtres</a></p>
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-ico" aria-hidden="true">🔎</div>
+  <h3>Lancez votre première recherche</h3>
+  <p class="muted">Saisissez un nom, une marque ou un mot-clé ci-dessus. Sans
+  requête, aucun résultat n'est inventé : cette zone reste volontairement vide.</p>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="/static/js/recherche.js"></script>{% endblock %}

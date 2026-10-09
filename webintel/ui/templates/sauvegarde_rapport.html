@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Rapport de restauration{% endblock %}
+{% block content %}
+<h1>💾 Rapport de restauration</h1>
+{% if erreur %}
+<div class="card" style="border-left:4px solid var(--bad);">
+  <h2>❌ Restauration refusée</h2>
+  <p>{{ erreur }}</p>
+  <p class="muted">Aucune donnée n'a été modifiée.</p>
+</div>
+{% else %}
+<div class="card">
+  <h2>Résumé</h2>
+  <p>
+    <span class="badge ok">Créés : {{ rapport.crees }}</span>
+    <span class="badge warn">Mis à jour : {{ rapport.mis_a_jour }}</span>
+    <span class="badge muted">Ignorés (identiques) : {{ rapport.ignores }}</span>
+    <span class="badge bad">Conflits (conservés) : {{ rapport.conflits }}</span>
+    <span class="badge ok">Photos restaurées : {{ rapport.photos_restaurees }}</span>
+  </p>
+  {% if not forcer and rapport.conflits %}
+  <p class="muted">Les lignes existantes et différentes ont été <strong>conservées telles quelles</strong>
+  (jamais d'écrasement silencieux). Cochez « écraser explicitement » pour les remplacer, ou fusionnez à la main.</p>
+  {% endif %}
+</div>
+{% if rapport.details_conflits %}
+<div class="card">
+  <h2>Conflits (données conservées)</h2>
+  <table><thead><tr><th>Table</th><th>ID</th><th>Raison</th></tr></thead><tbody>
+  {% for d in rapport.details_conflits %}
+  <tr><td><code>{{ d.table }}</code></td><td>{{ d.id }}</td><td>{{ d.raison }}</td></tr>
+  {% endfor %}
+  </tbody></table>
+</div>
+{% endif %}
+<div class="card">
+  <h2>Détail par table</h2>
+  <table><thead><tr><th>Table</th><th>Créés</th><th>Mis à jour</th><th>Ignorés</th><th>Conflits</th></tr></thead><tbody>
+  {% for nom, info in rapport.tables.items() %}
+  <tr><td><code>{{ nom }}</code></td><td>{{ info.crees }}</td><td>{{ info.mis_a_jour }}</td><td>{{ info.ignores }}</td><td>{{ info.conflits }}</td></tr>
+  {% endfor %}
+  </tbody></table>
+</div>
+{% endif %}
+<p><a class="badge muted" href="/synchronisation" style="text-decoration:none;">← Retour à la synchronisation</a></p>
+{% endblock %}

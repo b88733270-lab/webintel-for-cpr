@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ synthese.titre }}{% endblock %}
+
+{# Pastille de niveau de donnée (même convention que la fiche). #}
+{% macro badge(b) -%}
+{% if b %}<span class="badge" style="background-color:{{ b.couleur|default("#6e7781", true) }};color:#fff;border:none;">{{ b.label|default("—", true) }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro source_liens(src) -%}
+{% if src %}
+  {% if src.doi %}<a href="https://doi.org/{{ src.doi }}" target="_blank" rel="noopener">DOI&nbsp;{{ src.doi }}</a>{% endif %}
+  {% if src.url %}{% if src.doi %} · {% endif %}<a href="{{ src.url }}" target="_blank" rel="noopener">Lien source</a>{% endif %}
+  {% if src.reference and not src.doi and not src.url %}<span class="muted">{{ src.reference }}</span>{% endif %}
+{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<h1>{{ synthese.titre }}</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> {{ badge(synthese.badge) }}</p>
+
+<div class="alert-error" style="border-left:4px solid #9a6700;">
+  <strong>Hypothèse générée par IA — à vérifier.</strong> {{ synthese.avertissement }}
+</div>
+
+<div class="card">
+  <h2>Synthèse</h2>
+  {% for paragraphe in synthese.texte.split("\n\n") %}
+  <p>{{ paragraphe }}</p>
+  {% endfor %}
+  <p class="muted">Moteur&nbsp;: {{ synthese.moteur }} · Générée le&nbsp;: {{ synthese.genere_le|date_courte }}
+     · <strong>Non enregistrée</strong> (éphémère).</p>
+</div>
+
+<div class="card">
+  <h2>Sources utilisées ({{ synthese.sources|length }})</h2>
+  {% if synthese.sources %}
+  <ol>
+    {% for src in synthese.sources %}
+    <li>
+      <strong>{{ src.titre|default(src.reference, true) }}</strong>
+      {{ badge({"label": "publié", "couleur": "#1a7f37"}) }}
+      <br>{{ source_liens(src) }}
+      {% if src.annee %}<span class="muted">({{ src.annee }})</span>{% endif %}
+      {% if src.auteurs %}<br><span class="muted">{{ src.auteurs|join(", ") }}</span>{% endif %}
+      {% if src.extrait %}<br><em>« {{ src.extrait[:300] }} »</em>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="muted">Aucune source documentaire liée à cette plante pour l'instant.</p>
+  {% endif %}
+</div>
+
+<p><a href="/plantes/{{ plant_id }}">← Retour à la fiche plante</a></p>
+{% endblock %}

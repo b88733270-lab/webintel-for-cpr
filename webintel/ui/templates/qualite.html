@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Contrôle qualité{% endblock %}
+
+{% block content %}
+<h1>Contrôle qualité des données</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — examen en
+<strong>lecture seule</strong> du corpus. Chaque anomalie porte une sévérité
+et une action recommandée ; <strong>aucune correction automatique</strong>
+n'est appliquée : c'est le chercheur qui décide.</p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+{% if rappel %}<div class="card"><p>{{ rappel }}</p></div>{% endif %}
+
+{% if resume %}
+<div class="card">
+  <h2>Résumé</h2>
+  <p><strong>{{ resume.total or 0 }}</strong> anomalie(s) détectée(s).</p>
+  <table>
+    <tr><th>Sévérité</th><th>Nombre</th></tr>
+    <tr><td><span class="badge" style="background-color:#cf222e;color:#fff;border:none;">Critique</span></td><td>{{ (resume.par_severite or {}).critique or 0 }}</td></tr>
+    <tr><td><span class="badge" style="background-color:#9a6700;color:#fff;border:none;">Avertissement</span></td><td>{{ (resume.par_severite or {}).avertissement or 0 }}</td></tr>
+    <tr><td><span class="badge">Information</span></td><td>{{ (resume.par_severite or {}).info or 0 }}</td></tr>
+  </table>
+  {% if resume.par_categorie %}
+  <p class="muted">Par catégorie :
+    {% for cat, n in resume.par_categorie.items() %}{{ cat }} ({{ n }}){% if not loop.last %}, {% endif %}{% endfor %}
+  </p>
+  {% endif %}
+</div>
+{% endif %}
+
+<h2>Anomalies ({{ anomalies|length }})</h2>
+{% if not anomalies %}
+<div class="card"><p class="muted">Aucune anomalie détectée — le corpus est propre selon les détecteurs.</p></div>
+{% else %}
+{% for a in anomalies %}
+<div class="card" style="margin:8px 0;">
+  <p>
+    {% if a.severite == "critique" %}
+    <span class="badge" style="background-color:#cf222e;color:#fff;border:none;">Critique</span>
+    {% elif a.severite == "avertissement" %}
+    <span class="badge" style="background-color:#9a6700;color:#fff;border:none;">Avertissement</span>
+    {% else %}
+    <span class="badge">Information</span>
+    {% endif %}
+    <strong>{{ a.categorie }}</strong> — {{ a.titre }}
+  </p>
+  <p>{{ a.detail }}</p>
+  {% if a.entite_type %}<p class="muted">Entité : {{ a.entite_type }}{% if a.entite_id %} #{{ a.entite_id }}{% endif %}</p>{% endif %}
+  <p><strong>Action recommandée :</strong> {{ a.action_proposee }}</p>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

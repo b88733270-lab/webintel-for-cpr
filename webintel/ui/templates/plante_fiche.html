@@ -1,0 +1,460 @@
+{% extends "base.html" %}
+{% block title %}{{ fiche.get("plante", {}).get("nom_scientifique") or "Fiche plante" }}{% endblock %}
+
+{# Pastille de niveau de donnée : couleur exacte du contrat en style inline. #}
+{% macro badge(b) -%}
+{% if b %}<span class="badge" style="background-color:{{ b.couleur|default("#6e7781", true) }};color:#fff;border:none;">{{ b.label|default("—", true) }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro source_liens(src) -%}
+{% if src %}
+  {% if src.doi %}<a href="https://doi.org/{{ src.doi }}" target="_blank" rel="noopener">DOI&nbsp;{{ src.doi }}</a>{% endif %}
+  {% if src.url %}{% if src.doi %} · {% endif %}<a href="{{ src.url }}" target="_blank" rel="noopener">Lien source</a>{% endif %}
+  {% if src.reference and not src.doi and not src.url %}<span class="muted">{{ src.reference }}</span>{% endif %}
+{% endif %}
+{%- endmacro %}
+
+{# Preuve pointée : citation courte + lien DOI. #}
+{% macro preuve(p) -%}
+{% if p %}
+  <span class="muted">Preuve&nbsp;:</span>
+  {% if p.doi %}<a href="https://doi.org/{{ p.doi }}" target="_blank" rel="noopener">DOI&nbsp;{{ p.doi }}</a>
+  {% elif p.reference %}<span class="muted">{{ p.reference|truncate(60) }}</span>
+  {% else %}<span class="muted">réf. #{{ p.evidence_id }}</span>{% endif %}
+{% else %}<span class="muted">sans preuve pointée</span>{% endif %}
+{%- endmacro %}
+
+{% set plante = fiche.get("plante", {}) %}
+{% set botanique = fiche.get("botanique", {}) %}
+{% set pharmacognosie = fiche.get("pharmacognosie", {}) %}
+{% block content %}
+<h1><em>{{ plante.nom_scientifique|default("Plante inconnue", true) }}</em></h1>
+<p class="muted">Fiche scientifique — Projet : <strong>{{ project.name }}</strong>
+  {{ badge(plante.badge) }}</p>
+
+{% if erreur %}
+<div class="alert-error"><strong>Erreur.</strong> {{ erreur }}</div>
+{% endif %}
+{% if message %}
+<div class="alert-ok"><strong>OK.</strong> {{ message }}</div>
+{% endif %}
+
+{% if fiche.get("avertissement_separation") %}
+<div class="alert-error" style="border-left:4px solid #9a6700;">
+  <strong>Lecture de la fiche.</strong> {{ fiche.avertissement_separation }}
+</div>
+{% endif %}
+
+{# ---------- Légende des 5 niveaux de données (toujours visible) ---------- #}
+<div class="card">
+  <h2>Niveaux de données</h2>
+  <p class="muted">WebIntel sépare strictement 5 niveaux de données. Chaque section
+  de la fiche affiche son niveau — une section vide signifie « pas de donnée »,
+  jamais « pas d'effet ».</p>
+  <p>
+    <span class="badge" style="background-color:#1a7f37;color:#fff;">Publié</span>
+    données publiées et sourcées
+    &nbsp;·&nbsp;
+    <span class="badge" style="background-color:#0969da;color:#fff;">Normalisé</span>
+    données importées et normalisées
+    &nbsp;·&nbsp;
+    <span class="badge" style="background-color:#9a6700;color:#fff;">Hypothèse</span>
+    synthèse IA, à vérifier
+    &nbsp;·&nbsp;
+    <span class="badge" style="background-color:#8250df;color:#fff;">Prédiction</span>
+    simulation — à confirmer expérimentalement
+    &nbsp;·&nbsp;
+    <span class="badge" style="background-color:#cf222e;color:#fff;">Expérimental</span>
+    observations de votre laboratoire (privé)
+  </p>
+</div>
+
+{# ---------- Identité botanique ---------- #}
+<div class="card">
+  <h2>Identité botanique</h2>
+  <table>
+    <tr><th style="width:220px;">Nom scientifique</th><td><em>{{ plante.nom_scientifique|default("—", true) }}</em></td></tr>
+    {% if plante.synonymes %}<tr><th>Synonymes</th><td>{{ plante.synonymes|join(", ") }}</td></tr>{% endif %}
+    {% if plante.noms_vernaculaires %}
+    <tr><th>Noms vernaculaires</th><td>
+      {% for langue, noms in plante.noms_vernaculaires.items() %}
+        <strong>{{ langue }}</strong>&nbsp;: {{ noms|join(", ") }}{% if not loop.last %}<br>{% endif %}
+      {% endfor %}
+    </td></tr>
+    {% endif %}
+    <tr><th>Famille</th><td>{{ plante.famille|default("—", true) }}</td></tr>
+    <tr><th>Genre</th><td><em>{{ plante.genre|default("—", true) }}</em></td></tr>
+    <tr><th>Espèce</th><td><em>{{ plante.espece|default("—", true) }}</em></td></tr>
+    {% if plante.taxonomie %}
+    <tr><th>Taxonomie</th><td>
+      {% for rang, valeur in plante.taxonomie.items() %}{{ rang }}&nbsp;: <em>{{ valeur }}</em>{% if not loop.last %}<br>{% endif %}{% endfor %}
+    </td></tr>
+    {% endif %}
+    {% if plante.identifiants_externes %}
+    <tr><th>Identifiants externes</th><td>
+      {% for base, ident in plante.identifiants_externes.items() %}<span class="badge muted">{{ base }}&nbsp;: {{ ident }}</span> {% endfor %}
+    </td></tr>
+    {% endif %}
+  </table>
+</div>
+
+{# ---------- Botanique ---------- #}
+<div class="card">
+  <h2>Botanique {{ badge(botanique.badge) }}</h2>
+  {% if botanique.description %}<p>{{ botanique.description }}</p>{% endif %}
+  <table>
+    {% if botanique.feuilles %}<tr><th style="width:220px;">Feuilles</th><td>{{ botanique.feuilles }}</td></tr>{% endif %}
+    {% if botanique.fleurs %}<tr><th>Fleurs</th><td>{{ botanique.fleurs }}</td></tr>{% endif %}
+    {% if botanique.fruits %}<tr><th>Fruits</th><td>{{ botanique.fruits }}</td></tr>{% endif %}
+    {% if botanique.graines %}<tr><th>Graines</th><td>{{ botanique.graines }}</td></tr>{% endif %}
+    {% if botanique.racines %}<tr><th>Racines</th><td>{{ botanique.racines }}</td></tr>{% endif %}
+    {% if botanique.ecorce %}<tr><th>Écorce</th><td>{{ botanique.ecorce }}</td></tr>{% endif %}
+    {% if botanique.habitat %}<tr><th>Habitat</th><td>{{ botanique.habitat }}</td></tr>{% endif %}
+    {% if botanique.distribution %}<tr><th>Distribution</th><td>{{ botanique.distribution }}</td></tr>{% endif %}
+    {% if botanique.parties_utilisees %}<tr><th>Parties utilisées</th><td>{{ botanique.parties_utilisees|join(", ") }}</td></tr>{% endif %}
+    {% if botanique.references_botaniques %}<tr><th>Références botaniques</th><td>{{ botanique.references_botaniques|join("; ") }}</td></tr>{% endif %}
+  </table>
+  {% if botanique.images %}
+  <div>
+    {% for img in botanique.images %}
+      {% if img is string %}
+        <img src="{{ img }}" alt="Illustration botanique" style="max-width:200px;margin:4px;border-radius:6px;">
+      {% elif img.url %}
+        <img src="{{ img.url }}" alt="{{ img.legende|default("Illustration botanique", true) }}" style="max-width:200px;margin:4px;border-radius:6px;">
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if not botanique.description and not botanique.distribution and not botanique.parties_utilisees and not botanique.images
+        and not botanique.feuilles and not botanique.fleurs and not botanique.fruits and not botanique.graines
+        and not botanique.racines and not botanique.ecorce and not botanique.habitat %}
+  <p class="muted">Botanique non renseignée pour l'instant — complétez-la via le formulaire ci-dessous.</p>
+  {% endif %}
+</div>
+
+{# ---------- Pharmacognosie ---------- #}
+<div class="card">
+  <h2>Pharmacognosie {{ badge(pharmacognosie.badge) }}</h2>
+  {% if pharmacognosie.parties_utilisees %}
+  <p><strong>Parties utilisées&nbsp;:</strong> {{ pharmacognosie.parties_utilisees|join(", ") }}</p>
+  {% endif %}
+  {% if pharmacognosie.matiere_premiere %}
+  <p><strong>Matière première&nbsp;:</strong> {{ pharmacognosie.matiere_premiere }}</p>
+  {% endif %}
+  {% if pharmacognosie.preparation %}
+  <p><strong>Préparation&nbsp;:</strong> {{ pharmacognosie.preparation }}</p>
+  {% endif %}
+  {% if pharmacognosie.methodes_extraction_rapporteess %}
+  <p><strong>Méthodes d'extraction rapportées&nbsp;:</strong> {{ pharmacognosie.methodes_extraction_rapporteess|join("; ") }}</p>
+  {% endif %}
+  {% set extractions = pharmacognosie.extractions|default([], true) %}
+  {% if extractions %}
+  <table>
+    <tr><th>Partie</th><th>Extraction</th><th>Rendement</th><th>Analyse</th><th>Publication</th></tr>
+    {% for e in extractions %}
+    <tr>
+      <td>{{ e.partie|default("—", true) }}</td>
+      <td>{{ e.methode_extraction|default("—", true) }}</td>
+      <td>{% if e.rendement is not none %}{{ e.rendement }} {{ e.rendement_unite|default("", true) }}{% else %}—{% endif %}</td>
+      <td>{{ e.methode_analyse|default("—", true) }}</td>
+      <td>{{ source_liens({"doi": e.doi, "reference": e.publication}) }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  {% if pharmacognosie.note %}<p class="muted">{{ pharmacognosie.note }}</p>{% endif %}
+  {% if not pharmacognosie.parties_utilisees and not pharmacognosie.methodes_extraction_rapporteess and not pharmacognosie.note
+        and not pharmacognosie.matiere_premiere and not pharmacognosie.preparation %}
+  <p class="muted">Pharmacognosie non renseignée pour l'instant.</p>
+  {% endif %}
+</div>
+
+{# ---------- Phytochimie ---------- #}
+<div class="card">
+  <h2>Phytochimie</h2>
+  {% set composes = fiche.get("phytochimie", []) %}
+  {% if composes %}
+  <table>
+    <tr><th>Composé</th><th>Formule</th><th>Classe chimique</th><th>Partie</th>
+        <th>Concentration</th><th>Analyse</th><th>Rendement</th><th>Confiance</th><th>Source / preuve</th><th>Niveau</th></tr>
+    {% for c in composes %}
+    <tr>
+      <td><strong>{{ c.nom|default("—", true) }}</strong></td>
+      <td>{{ c.formule|default("—", true) }}</td>
+      <td>{{ c.classe_chimique|default("—", true) }}</td>
+      <td>{{ c.partie|default("—", true) }}</td>
+      <td>{% if c.concentration is not none %}{{ c.concentration }} {{ c.unite|default("", true) }}{% else %}—{% endif %}</td>
+      <td>{{ c.methode_analyse|default("—", true) }}</td>
+      <td>{% if c.rendement is not none %}{{ c.rendement }} {{ c.rendement_unite|default("", true) }}{% else %}—{% endif %}</td>
+      <td>{{ c.confiance|default("—", true) }}</td>
+      <td>{{ source_liens({"doi": c.doi, "url": c.url, "reference": c.publication}) }}
+        {% if c.publication %}<br><span class="muted">{{ c.publication|truncate(60) }}</span>{% endif %}
+        <br>{{ preuve(c.preuve) }}</td>
+      <td>{{ badge(c.badge) }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Aucun composé rapporté pour cette plante.</p>{% endif %}
+</div>
+
+{# ---------- Pharmacologie ---------- #}
+<div class="card">
+  <h2>Pharmacologie</h2>
+  {% set etudes = fiche.get("pharmacologie", []) %}
+  {% if etudes %}
+    {% for e in etudes %}
+    <div class="card" style="margin:8px 0;">
+      <p><strong>{{ e.titre|default("Étude", true) }}</strong> {{ badge(e.badge) }}</p>
+      <p class="muted">{{ e.type_source|default("", true) }}{% if e.auteurs %} — {{ e.auteurs|join(", ") }}{% endif %}{% if e.annee %} ({{ e.annee }}){% endif %}</p>
+      {% if e.extrait %}<p>{{ e.extrait }}</p>{% endif %}
+      <p>{{ source_liens({"doi": e.doi, "url": e.url, "reference": e.reference}) }}
+        {% if e.pmid %}<span class="muted">PMID&nbsp;: {{ e.pmid }}</span>{% endif %}</p>
+    </div>
+    {% endfor %}
+  {% else %}<p class="muted">Aucune étude pharmacologique référencée.</p>{% endif %}
+
+  {# Activités pharmacologiques rapportées (v2.1) #}
+  <h3>Activités pharmacologiques rapportées</h3>
+  <p class="muted">Données <strong>rapportées</strong> telles que publiées (activité, modèle, type d'étude) —
+     jamais une allégation d'effet thérapeutique.</p>
+  {% set activites = fiche.get("activites_pharmacologiques", []) %}
+  {% if activites %}
+  <table>
+    <tr><th>Activité</th><th>Type d'étude</th><th>Modèle</th><th>Résultat publié</th><th>Preuve</th></tr>
+    {% for a in activites %}
+    <tr>
+      <td><strong>{{ a.activite }}</strong> {{ badge(a.badge) }}</td>
+      <td>{{ a.type_etude|default("—", true) }}</td>
+      <td>{{ a.modele_etude|default("—", true) }}</td>
+      <td>{{ a.resultat_publie|default("—", true) }}</td>
+      <td>{{ preuve(a.preuve) }}{% if a.doi %}<br>{{ source_liens({"doi": a.doi}) }}{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Aucune activité pharmacologique rapportée pour l'instant.</p>{% endif %}
+
+  {# Cibles documentées (v2.1) #}
+  <h3>Cibles biologiques documentées</h3>
+  <p class="muted">Cibles <strong>documentées</strong> dans la littérature pour les composés de cette plante —
+     jamais « validées » par WebIntel.</p>
+  {% set cibles = fiche.get("cibles", []) %}
+  {% if cibles %}
+  <table>
+    <tr><th>Composé</th><th>Cible</th><th>Type</th><th>Interaction</th><th>Affinité</th><th>Preuve</th></tr>
+    {% for t in cibles %}
+    <tr>
+      <td><strong>{{ t.compose_nom|default("—", true) }}</strong></td>
+      <td>{{ t.cible }}</td>
+      <td>{{ t.type_cible|default("—", true) }}</td>
+      <td>{{ t.type_interaction|default("—", true) }}</td>
+      <td>{% if t.affinite is not none %}{{ t.affinite }} {{ t.affinite_unite|default("", true) }}{% else %}—{% endif %}</td>
+      <td>{{ preuve(t.preuve) }}{% if t.doi %}<br>{{ source_liens({"doi": t.doi}) }}{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Aucune cible documentée pour l'instant.</p>{% endif %}
+</div>
+
+{# ---------- Sécurité ---------- #}
+{% set securite = fiche.get("securite", []) %}
+<div class="card" style="border:2px solid #cf222e;">
+  <h2>⚠️ Sécurité</h2>
+  <div class="alert-error">
+    <strong>Bandeau de prudence.</strong> Les informations ci-dessous sont des données
+    <strong>rapportées</strong> (heuristique textuelle sur les sources citées) —
+    <strong>ceci n'est pas un avis médical, toxicologique ou réglementaire</strong>.
+    Consultez toujours la source originale et un professionnel de santé qualifié.
+    <br><strong>Limites des données :</strong> l'absence d'alerte ne signifie pas
+    l'absence de risque ; les données peuvent être partielles ou anciennes.
+  </div>
+  {% if securite %}
+  {% for s in securite %}
+  <div class="alert-error">
+    <p><strong>{{ s.avertissement|default("Avertissement de sécurité.", true) }}</strong></p>
+    {% if s.titre %}<p><strong>{{ s.titre }}</strong>{% if s.auteurs %} — {{ s.auteurs|join(", ") }}{% endif %}{% if s.annee %} ({{ s.annee }}){% endif %} {{ badge(s.badge) }}</p>{% endif %}
+    {% if s.extrait %}<p>{{ s.extrait }}</p>{% endif %}
+    <p>{{ source_liens({"doi": s.doi, "url": s.url, "reference": s.reference}) }}</p>
+  </div>
+  {% endfor %}
+  {% else %}<p class="muted">Aucune donnée de sécurité rapportée pour l'instant — cela ne signifie pas l'absence de risque.</p>{% endif %}
+</div>
+
+{# ---------- Littérature (v2.1) ---------- #}
+{% set litterature = fiche.get("litterature", []) %}
+<div class="card">
+  <h2>Littérature</h2>
+  {% if litterature %}
+  <table>
+    <tr><th>Titre</th><th>Auteurs</th><th>Année</th><th>Journal</th><th>Type</th><th>Identifiants</th></tr>
+    {% for l in litterature %}
+    <tr>
+      <td><strong>{{ l.titre|default("—", true) }}</strong> {{ badge(l.badge) }}</td>
+      <td>{{ l.auteurs|join(", ")|default("—", true) }}</td>
+      <td>{{ l.annee|default("—", true) }}</td>
+      <td>{{ l.journal|default("—", true) }}</td>
+      <td>{{ l.type|default("—", true) }}</td>
+      <td>{% if l.doi %}<a href="https://doi.org/{{ l.doi }}" target="_blank" rel="noopener">DOI&nbsp;{{ l.doi }}</a><br>{% endif %}
+          {% if l.pmid %}<span class="muted">PMID&nbsp;: {{ l.pmid }}</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Littérature non renseignée pour l'instant.</p>{% endif %}
+</div>
+
+{# ---------- Bibliographie ---------- #}
+{% set biblio = fiche.get("bibliographie", []) %}
+<div class="card">
+  <h2>Bibliographie</h2>
+  {% if biblio %}
+  <ol>
+    {% for ref in biblio %}<li>{{ ref }}</li>{% endfor %}
+  </ol>
+  {% else %}<p class="muted">Aucune référence bibliographique pour l'instant.</p>{% endif %}
+</div>
+
+{# ---------- Données de laboratoire (privé) ---------- #}
+{% set labo = fiche.get("laboratoire_prive", []) %}
+<div class="card" style="border:2px dashed #cf222e;background:#fff5f5;">
+  <h2>Données de laboratoire <span class="badge" style="background-color:#cf222e;color:#fff;border:none;">Privé — projet</span></h2>
+  <p class="muted">Ces observations expérimentales appartiennent au projet <strong>{{ project.name }}</strong>
+     et ne sont jamais exposées hors du laboratoire.</p>
+  {% if labo %}
+  {% for o in labo %}
+  <div class="card" style="margin:8px 0;">
+    <p><strong>{{ o.protocol_ref|default("Observation", true) }}</strong>
+      <span class="badge" style="background-color:#cf222e;color:#fff;border:none;">expérimental</span></p>
+    <p class="muted">{% if o.observed_date %}Le {{ o.observed_date }} — {% endif %}{{ o.author|default("auteur inconnu", true) }}{% if o.laboratory %} ({{ o.laboratory }}){% endif %} — statut&nbsp;: {{ o.status|default("—", true) }}</p>
+    {% if o.comment %}<p>{{ o.comment }}</p>{% endif %}
+  </div>
+  {% endfor %}
+  {% else %}<p class="muted">Aucune observation de laboratoire pour ce projet.</p>{% endif %}
+</div>
+
+{# ---------- Simulations ---------- #}
+{% set simus = fiche.get("simulations", []) %}
+<div class="card" style="border:2px solid #8250df;">
+  <h2>Simulations</h2>
+  <p class="muted">Résultats de calcul — <strong>à confirmer expérimentalement</strong>, jamais une preuve.</p>
+  {% if simus %}
+  {% for s in simus %}
+  <div class="card" style="margin:8px 0;">
+    <p><strong>{{ s.nom|default("Simulation", true) }}</strong>
+      <span class="badge" style="background-color:#8250df;color:#fff;border:none;">prédiction — à confirmer expérimentalement</span></p>
+    <p class="muted">Cible&nbsp;: {{ s.cible|default("—", true) }} · Méthode&nbsp;: {{ s.methode|default("—", true) }} · Moteur&nbsp;: {{ s.moteur|default("—", true) }}{% if s.version_moteur %} {{ s.version_moteur }}{% endif %}{% if s.date %} · {{ s.date }}{% endif %}</p>
+    <p><strong>Résultat&nbsp;:</strong> {{ s.resultat|default("—", true) }}{% if s.unites %} {{ s.unites }}{% endif %}</p>
+    {% if s.confiance %}<p class="muted">Confiance du modèle&nbsp;: {{ s.confiance }}</p>{% endif %}
+    {% if s.references %}<p class="muted">Références&nbsp;: {{ s.references|join("; ") }}</p>{% endif %}
+    {% if s.avertissement %}<p class="alert-error">{{ s.avertissement }}</p>{% endif %}
+  </div>
+  {% endfor %}
+  {% else %}<p class="muted">Aucune simulation pour ce projet.</p>{% endif %}
+</div>
+
+{# ---------- Synthèse IA (Phase 11 : uniquement si l'IA est activée) ---------- #}
+{% if ia_activee %}
+<div class="card" style="border:2px solid #1f883d;">
+  <h2>Synthèse IA {{ badge({"label": "hypothèse — généré par IA, à vérifier", "couleur": "#9a6700"}) }}</h2>
+  <p class="muted">Assemblage automatique des sources de la fiche — jamais une preuve,
+     jamais enregistré. Les données privées du laboratoire ne sont pas utilisées.</p>
+  <p><a href="/plantes/{{ plant_id }}/synthese-ia" class="button">Générer la synthèse automatique</a></p>
+</div>
+{% endif %}
+
+{# ---------- Édition manuelle sourcée (v2.1) ---------- #}
+<div class="card" style="border:2px solid #0969da;">
+  <h2>✏️ Compléter cette fiche</h2>
+  <p class="muted">Édition manuelle <strong>sourcée</strong> : chaque ajout exige une source
+     (publication ou DOI). Les données ajoutées sont étiquetées « publié » avec leur source —
+     rien n'est validé scientifiquement par WebIntel.</p>
+
+  <details>
+    <summary><strong>Botanique &amp; pharmacognosie</strong> — morphologie, habitat, matière première, préparation</summary>
+    <form method="post" action="/plantes/{{ plant_id }}/botanique" style="margin-top:8px;">
+      <div class="field"><label>Feuilles</label><input type="text" name="feuilles" value="{{ botanique.feuilles or '' }}" size="60"></div>
+      <div class="field"><label>Fleurs</label><input type="text" name="fleurs" value="{{ botanique.fleurs or '' }}" size="60"></div>
+      <div class="field"><label>Fruits</label><input type="text" name="fruits" value="{{ botanique.fruits or '' }}" size="60"></div>
+      <div class="field"><label>Graines</label><input type="text" name="graines" value="{{ botanique.graines or '' }}" size="60"></div>
+      <div class="field"><label>Racines</label><input type="text" name="racines" value="{{ botanique.racines or '' }}" size="60"></div>
+      <div class="field"><label>Écorce</label><input type="text" name="ecorce" value="{{ botanique.ecorce or '' }}" size="60"></div>
+      <div class="field"><label>Habitat</label><input type="text" name="habitat" value="{{ botanique.habitat or '' }}" size="60"></div>
+      <div class="field"><label>Matière première</label><input type="text" name="matiere_premiere" value="{{ pharmacognosie.matiere_premiere or '' }}" size="60"></div>
+      <div class="field"><label>Préparation</label><input type="text" name="preparation" value="{{ pharmacognosie.preparation or '' }}" size="60"></div>
+      <div class="field"><label>Références botaniques (séparées par « ; »)</label><input type="text" name="references_botaniques" value="{{ botanique.references_botaniques|join('; ') if botanique.references_botaniques else '' }}" size="60"></div>
+      <div class="field"><label>Source <em>(obligatoire)</em></label><input type="text" name="source" size="60" placeholder="Flore de… (2020) ou DOI 10.xxxx/…" required></div>
+      <button type="submit">Enregistrer</button>
+    </form>
+  </details>
+
+  <details>
+    <summary><strong>Ajouter un composé</strong> — phytochimie rapportée</summary>
+    <form method="post" action="/plantes/{{ plant_id }}/composes/ajouter" style="margin-top:8px;">
+      <div class="field"><label>Nom du composé <em>(obligatoire)</em></label><input type="text" name="nom_compose" size="50" required></div>
+      <div class="field"><label>Partie de plante</label><input type="text" name="partie" size="30" placeholder="feuilles"></div>
+      <div class="field"><label>Concentration</label><input type="text" name="concentration" size="15" placeholder="1.2"> <input type="text" name="unite" size="10" placeholder="mg/g"></div>
+      <div class="field"><label>Méthode d'extraction</label><input type="text" name="methode_extraction" size="40"></div>
+      <div class="field"><label>Méthode d'analyse</label><input type="text" name="methode_analyse" size="40" placeholder="HPLC, GC-MS…"></div>
+      <div class="field"><label>Rendement</label><input type="text" name="rendement" size="15" placeholder="8.2"> <input type="text" name="rendement_unite" size="10" placeholder="%"></div>
+      <div class="field"><label>Source <em>(obligatoire : publication ou DOI)</em></label><input type="text" name="source" size="60" required></div>
+      <button type="submit">Ajouter le composé</button>
+    </form>
+  </details>
+
+  <details>
+    <summary><strong>Ajouter une activité pharmacologique</strong> — rapportée, jamais une allégation d'effet</summary>
+    <form method="post" action="/plantes/{{ plant_id }}/activites/ajouter" style="margin-top:8px;">
+      <div class="field"><label>Activité <em>(obligatoire)</em></label><input type="text" name="activite" size="50" placeholder="activité antioxydante" required></div>
+      <div class="field"><label>Type d'étude</label>
+        <select name="type_etude">
+          <option value="">—</option>
+          <option value="in_vitro">in vitro</option>
+          <option value="in_vivo">in vivo</option>
+          <option value="clinique">clinique</option>
+          <option value="ex_vivo">ex vivo</option>
+        </select></div>
+      <div class="field"><label>Modèle d'étude</label><input type="text" name="modele_etude" size="50" placeholder="test DPPH, souris BALB/c…"></div>
+      <div class="field"><label>Résultat publié</label><input type="text" name="resultat_publie" size="60" placeholder="CI50 = 12 µg/mL (tel que rapporté)"></div>
+      <div class="field"><label>Source <em>(obligatoire : publication ou DOI)</em></label><input type="text" name="source" size="60" required></div>
+      <button type="submit">Ajouter l'activité</button>
+    </form>
+  </details>
+
+  <details>
+    <summary><strong>Ajouter une cible documentée</strong> — composé → cible biologique</summary>
+    <form method="post" action="/plantes/{{ plant_id }}/cibles/ajouter" style="margin-top:8px;">
+      <div class="field"><label>Composé <em>(obligatoire)</em></label>
+        <select name="compose_id" required>
+          <option value="">— choisir —</option>
+          {% for c in fiche.get("phytochimie", []) %}
+          <option value="{{ c.compose_id }}">{{ c.nom|default("Composé #" ~ c.compose_id, true) }}</option>
+          {% endfor %}
+        </select></div>
+      <div class="field"><label>Cible biologique <em>(obligatoire)</em></label><input type="text" name="cible" size="40" placeholder="COX-2" required></div>
+      <div class="field"><label>Type d'interaction</label>
+        <select name="type_interaction">
+          <option value="">—</option>
+          <option value="inhibition">inhibition</option>
+          <option value="activation">activation</option>
+          <option value="modulation">modulation</option>
+          <option value="liaison">liaison</option>
+        </select></div>
+      <div class="field"><label>Source <em>(obligatoire : publication ou DOI)</em></label><input type="text" name="source" size="60" required></div>
+      <button type="submit">Ajouter la cible</button>
+    </form>
+  </details>
+
+  <details>
+    <summary><strong>Ajouter une étude / publication</strong> — littérature structurée</summary>
+    <form method="post" action="/plantes/{{ plant_id }}/etudes/ajouter" style="margin-top:8px;">
+      <div class="field"><label>Titre <em>(obligatoire)</em></label><input type="text" name="titre" size="70" required></div>
+      <div class="field"><label>Auteurs (séparés par « ; »)</label><input type="text" name="auteurs" size="60"></div>
+      <div class="field"><label>Année</label><input type="text" name="annee" size="8"></div>
+      <div class="field"><label>Journal</label><input type="text" name="journal" size="50"></div>
+      <div class="field"><label>DOI</label><input type="text" name="doi" size="40" placeholder="10.xxxx/…"></div>
+      <div class="field"><label>PMID</label><input type="text" name="pmid" size="20"></div>
+      <button type="submit">Ajouter l'étude</button>
+    </form>
+  </details>
+</div>
+
+<p><a href="/plantes">← Retour à la liste des plantes</a></p>
+{% endblock %}

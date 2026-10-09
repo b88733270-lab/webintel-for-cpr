@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Résultat — {{ analyse.nom }}{% endblock %}
+
+{% macro rendre(v) -%}
+{% if v is none %}<em class="muted">—</em>
+{% elif v is mapping %}
+<dl class="kv">
+{% for k, val in v.items() %}<dt>{{ k }}</dt><dd>{{ rendre(val) }}</dd>{% endfor %}
+</dl>
+{% elif v is sequence and v is not string %}
+<ul>{% for elt in v %}<li>{{ rendre(elt) }}</li>{% endfor %}</ul>
+{% else %}{{ v }}{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<h1>Résultat d'analyse — {{ analyse.nom }}</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> ·
+Méthode : <strong>{{ analyse.methode|upper }}</strong> ·
+Statut : {{ analyse.statut }} ·
+<span class="badge badge-experimental">{{ badge_prive }}</span></p>
+<p class="alert-error"><strong>Résultat informatique.</strong>
+Analyse de données expérimentales fournies par le laboratoire : elle décrit
+des écarts observés selon le modèle {{ analyse.methode|upper }}, ne démontre
+aucune synergie pharmacologique et ne se prononce pas sur la sécurité d'emploi
+d'une association. À confirmer par des réplicats expérimentaux indépendants.</p>
+
+<div class="card">
+  <h2>Méthode</h2>
+  <p><code>{{ resultat.formule }}</code></p>
+  <p class="muted">{{ resultat.reference }}</p>
+  <h2>Données utilisées</h2>
+  {{ rendre(resultat.donnees_utilisees) }}
+  <p class="muted">Molécule A : {{ nom_a }} · Molécule B : {{ nom_b }}</p>
+  <h2>Résultat</h2>
+  {{ rendre(resultat.calcul) }}
+  <h2>Incertitude</h2>
+  {% if resultat.calcul and resultat.calcul.delta_moyen is not none %}
+  <p>Δ moyen = <strong>{{ resultat.calcul.delta_moyen }}</strong>
+  (min {{ resultat.calcul.delta_min }}, max {{ resultat.calcul.delta_max }},
+  sur {{ resultat.donnees_utilisees.nb_points }} point(s)). La dispersion
+  min–max reflète uniquement la variabilité des mesures fournies : ce n'est
+  pas un intervalle de confiance statistique.</p>
+  {% elif resultat.calcul and resultat.calcul.ci_moyen is not none %}
+  <p>CI moyen = <strong>{{ resultat.calcul.ci_moyen }}</strong>
+  (min {{ resultat.calcul.ci_min }}, max {{ resultat.calcul.ci_max }},
+  sur {{ resultat.donnees_utilisees.nb_points }} point(s)). La dispersion
+  min–max reflète uniquement la variabilité des mesures fournies : ce n'est
+  pas un intervalle de confiance statistique.</p>
+  {% else %}
+  <p class="muted">Voir le détail du calcul ci-dessus. L'incertitude dépend
+  de la variabilité des mesures fournies et de la qualité de l'ajustement
+  des courbes dose-réponse.</p>
+  {% endif %}
+  <h2>Interprétation prudente</h2>
+  <p>{{ resultat.interpretation }}</p>
+  {% if resultat.graphe_svg %}
+  <h2>Graphe</h2>
+  {{ resultat.graphe_svg|safe }}
+  {% endif %}
+  <h2>Limites</h2>
+  <ul>{% for l in resultat.limites %}<li>{{ l }}</li>{% endfor %}</ul>
+</div>
+
+<h2>Traçabilité</h2>
+<div class="card">
+  <p>Empreinte des entrées (SHA-256) : <code>{{ analyse.inputs_hash }}</code><br>
+  Niveau de données : <span class="badge badge-prediction">Prédiction</span>
+  <span class="muted">(analyse informatique — jamais une preuve expérimentale)</span></p>
+  <h3>Provenance</h3>
+  {{ rendre(analyse.provenance) }}
+</div>
+
+<p><a href="/synergie/nouvelle">Nouvelle analyse</a> ·
+   <a href="/combinaisons">← Retour aux combinaisons</a></p>
+{% endblock %}

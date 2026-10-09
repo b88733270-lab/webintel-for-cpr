@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Sources{% endblock %}
+{% block content %}
+<h1>🔎 Sources</h1>
+<p class="muted">Chaque donnée importante doit pouvoir être reliée à la source qui l'a produite : entité → source → observation → date → instantané. Ce registre liste les sources connues et leurs observations.</p>
+
+<div class="card">
+  <h2>Registre des sources ({{ count }})</h2>
+  {% if sources %}
+  <div class="table-wrap">
+  <table class="responsive-cards">
+    <thead><tr>
+      <th>Source</th><th>Hôte</th><th>Pays / vendeur</th>
+      <th>Observations</th><th>Changements</th><th>Dernière observation</th>
+    </tr></thead>
+    <tbody>
+    {% for s in sources %}
+      <tr>
+        <td data-label="Source">{{ s.nom }}</td>
+        <td data-label="Hôte">{{ s.hote }}</td>
+        <td data-label="Pays / vendeur">{{ s.pays or "—" }}{% if s.vendeur %} / {{ s.vendeur }}{% endif %}</td>
+        <td data-label="Observations">{{ s.observations }}</td>
+        <td data-label="Changements">{{ s.changements }}</td>
+        <td data-label="Dernière observation">{{ s.derniere_observation|date_courte }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>Aucune source enregistrée pour le moment.</p>
+    <p class="muted">Les sources apparaissent ici dès qu'une analyse d'URL ou un crawl produit des observations. <a href="/analyser">Analyser une URL →</a></p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

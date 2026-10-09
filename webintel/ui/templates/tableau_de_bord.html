@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord chercheur{% endblock %}
+{% block content %}
+<h1>🧭 Tableau de bord chercheur</h1>
+<p class="muted">Tous les indicateurs ci-dessous sont calculés en temps réel à
+partir de la base de données — <strong>aucune statistique artificielle</strong>.
+Les compteurs par projet respectent votre périmètre (en mode serveur : seul
+votre projet) ; « Plantes étudiées » et « Publications » portent sur
+l'ensemble de la base partagée.</p>
+
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+  {% for titre, valeur, lien, description in indicateurs %}
+  <div class="card kpi">
+    <div class="label">{{ titre }}</div>
+    <div class="value">{{ valeur }}</div>
+    <p class="muted">{{ description }}</p>
+    <p><a href="{{ lien }}"><strong>Ouvrir →</strong></a></p>
+  </div>
+  {% endfor %}
+  <div class="card kpi">
+    <div class="label">Rapports</div>
+    <div class="value">—</div>
+    <p class="muted">{{ rapports }}</p>
+    <p><a href="/export"><strong>Exporter mon dossier →</strong></a></p>
+  </div>
+  <div class="card kpi">
+    <div class="label">Outils</div>
+    <div class="value">—</div>
+    <p class="muted">Outils scientifiques, connecteurs, carte terrain,
+    synchronisation hors-ligne et paramètres.</p>
+    <p>
+      <a href="/outils-scientifiques">Outils scientifiques →</a><br>
+      <a href="/connecteurs">Connecteurs →</a><br>
+      <a href="/carte">Carte →</a><br>
+      <a href="/parametres">Paramètres →</a>
+    </p>
+  </div>
+</div>
+
+<div class="card" style="margin-top:1.2rem;">
+  <h2>Niveaux de données</h2>
+  <p class="muted">WebIntel sépare strictement les niveaux de preuve. Une case vide signifie « pas de donnée », jamais « pas d'effet ».</p>
+  <p>
+    {% for couleur, label, texte in niveaux %}
+    <span class="badge" style="background-color:{{ couleur }};color:#fff;">{{ label }}</span>
+    <span class="muted">{{ texte }}</span>{% if not loop.last %} &nbsp;·&nbsp; {% endif %}
+    {% endfor %}
+  </p>
+</div>
+{% endblock %}

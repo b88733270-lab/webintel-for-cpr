@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Exporter mon dossier{% endblock %}
+{% block content %}
+<h1>Exporter mon dossier de recherche</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — rapport
+reproductible : données rapportées, hypothèses, simulations, combinaisons,
+résultats, limites et références.</p>
+<p class="alert-error"><strong>{{ rapport.avertissement }}</strong></p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<div class="card">
+  <h2>Contenu du rapport</h2>
+  <ul>
+    <li>Fiche plantes : {{ rapport.resultats.nb_plantes }}</li>
+    <li>Composés : {{ rapport.resultats.nb_composes }}</li>
+    <li>Publications : {{ rapport.resultats.nb_publications }}</li>
+    <li>Hypothèses : {{ rapport.resultats.nb_hypotheses }}</li>
+    <li>Simulations : {{ rapport.resultats.nb_simulations }}</li>
+    <li>Combinaisons analysées : {{ rapport.resultats.nb_combinaisons }}</li>
+  </ul>
+  <h2>Télécharger</h2>
+  <p>
+    <a class="btn" href="/rapport/telecharger?format=markdown">⬇ Markdown</a>
+    <a class="btn" href="/rapport/telecharger?format=html">⬇ HTML</a>
+    <a class="btn" href="/rapport/telecharger?format=pdf">⬇ PDF</a>
+    <a class="btn" href="/rapport/telecharger?format=json">⬇ JSON</a>
+    <a class="btn" href="/rapport/telecharger?format=zip">⬇ ZIP reproductible</a>
+  </p>
+  <p class="muted">Le ZIP contient le rapport (Markdown + HTML), les entrées
+  normalisées avec leurs hash SHA-256, les versions des bibliothèques et
+  moteurs, les formules des méthodes de synergie et un manifeste. Les
+  données privées du laboratoire sont exclues par défaut.</p>
+  <p><a class="btn" href="/rapport/telecharger?format=zip&inclure_prive=1">⬇ ZIP avec mes données privées</a></p>
+</div>
+
+<p><a href="/combinaisons">← Retour aux combinaisons</a></p>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Rapport de simulation #{{ simulation.id }}{% endblock %}
+
+{% macro rendre(v) -%}
+{% if v is none %}<em class="muted">—</em>
+{% elif v is mapping %}
+<dl class="kv">
+{% for k, val in v.items() %}<dt>{{ k }}</dt><dd>{{ rendre(val) }}</dd>{% endfor %}
+</dl>
+{% elif v is sequence and v is not string %}
+<ul>{% for elt in v %}<li>{{ rendre(elt) }}</li>{% endfor %}</ul>
+{% else %}{{ v }}{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<h1>Rapport de simulation #{{ simulation.id }} — {{ simulation.name }}</h1>
+<p><span class="badge" style="background-color:#8250df;color:#fff;border:none;">Prédiction — à confirmer expérimentalement</span></p>
+<p class="alert-error"><strong>{{ rapport.avertissement }}</strong>
+Un résultat de simulation est une prédiction informatique, jamais une preuve
+expérimentale. Ne pas confondre avec un résultat de laboratoire.</p>
+
+<h2>Audit</h2>
+<dl class="kv">
+  <dt>Moteur</dt><dd><code>{{ rapport.engine_name }}</code> v{{ rapport.engine_version }}</dd>
+  <dt>Empreinte des entrées (SHA-256)</dt><dd><code>{{ rapport.input_hash }}</code></dd>
+  <dt>Exécutée par</dt><dd>{{ rapport.executed_by or "—" }}</dd>
+  <dt>Exécutée le</dt><dd>{{ rapport.run_at or "—" }}</dd>
+  <dt>Statut</dt><dd>{{ simulation.status }}</dd>
+</dl>
+
+<h2>Rejouabilité</h2>
+<p class="muted">Pour rejouer : <code>POST /api/science/simulations/{{ simulation.id }}/rejouer</code>
+ou <code>POST /api/science/simulations/run</code> avec le même moteur, les mêmes
+entrées (INPUTS) et les mêmes paramètres (PARAMETERS) → même empreinte SHA-256.</p>
+
+<p><a class="btn" href="/simulations/{{ simulation.id }}/rapport?format=markdown">⬇ Télécharger le rapport (Markdown)</a></p>
+
+{% for section in ["INPUTS", "METHOD", "PARAMETERS", "OUTPUTS", "REFERENCES", "LIMITATIONS"] %}
+<h2>{{ section }}</h2>
+{{ rendre(rapport[section]) }}
+{% endfor %}
+
+<p class="muted">Projet : <strong>{{ project.name }}</strong> ·
+<a href="/simulations">← Retour aux simulations</a></p>
+{% endblock %}

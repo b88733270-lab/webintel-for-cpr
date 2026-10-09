@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Recherche scientifique{% endblock %}
+
+{% macro badge(b) -%}
+{% if b %}<span class="badge" style="background-color:{{ b.couleur|default("#6e7781", true) }};color:#fff;border:none;">{{ b.label|default("—", true) }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro source_liens(src) -%}
+{% if src %}
+  {% if src.doi %}<a href="https://doi.org/{{ src.doi }}" target="_blank" rel="noopener">DOI&nbsp;{{ src.doi }}</a>{% endif %}
+  {% if src.url %}{% if src.doi %} · {% endif %}<a href="{{ src.url }}" target="_blank" rel="noopener">Lien source</a>{% endif %}
+  {% if src.reference and not src.doi and not src.url %}<span class="muted">{{ src.reference }}</span>{% endif %}
+{% endif %}
+{%- endmacro %}
+
+{% macro resultat(r) -%}
+<div class="card" style="margin:8px 0;">
+  <p><strong>{{ r.libelle|default("—", true) }}</strong> {{ badge(r.badge) }}</p>
+  {% if r.detail %}<p>{{ r.detail }}</p>{% endif %}
+  {% if r.plantes_liees %}<p class="muted">Plantes liées&nbsp;: {{ r.plantes_liees|join(", ") }}</p>{% endif %}
+  {% if r.avertissement %}<p class="alert-error">{{ r.avertissement }}</p>{% endif %}
+  <p>{{ source_liens(r.source) }}</p>
+</div>
+{%- endmacro %}
+
+{% block content %}
+<h1>Recherche scientifique</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — interroge les plantes, composés,
+   publications et simulations (y compris celles du laboratoire de ce projet).</p>
+
+<div class="card">
+  <form class="inline" method="get" action="/recherche-science">
+    <div class="field"><label for="q">Recherche</label>
+      <input type="text" id="q" name="q" value="{{ q }}" placeholder="plante, composé, mot-clé…"></div>
+    <div class="field"><label>Type</label>
+      {% for val, lib in [("plante","Plantes"),("compose","Composés"),("publication","Publications"),("simulation","Simulations")] %}
+      <label style="display:inline-block;margin-right:8px;">
+        <input type="checkbox" name="type" value="{{ val }}" {% if val in types %}checked{% endif %}> {{ lib }}</label>
+      {% endfor %}
+    </div>
+    <div class="field"><label for="data_level">Niveau de donnée</label>
+      <select id="data_level" name="data_level">
+        <option value="">Tous</option>
+        {% for val, lib in [("publie","Publié"),("normalise","Normalisé"),("hypothese","Hypothèse"),("prediction","Prédiction"),("experimental","Expérimental")] %}
+        <option value="{{ val }}" {% if data_level == val %}selected{% endif %}>{{ lib }}</option>
+        {% endfor %}
+      </select></div>
+    <div class="field"><label for="partie">Partie de plante</label>
+      <input type="text" id="partie" name="partie" value="{{ partie }}" placeholder="feuilles, racines…"></div>
+    <button type="submit">Rechercher</button>
+  </form>
+</div>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+{% if resultats %}
+<div class="card">
+  <h2>{{ total }} résultat(s) pour «&nbsp;{{ q }}&nbsp;»</h2>
+
+  <h3>Plantes ({{ resultats.plantes|length }})</h3>
+  {% if resultats.plantes %}{% for r in resultats.plantes %}{{ resultat(r) }}{% endfor %}
+  {% else %}<p class="muted">Aucune plante.</p>{% endif %}
+
+  <h3>Composés ({{ resultats.composes|length }})</h3>
+  {% if resultats.composes %}{% for r in resultats.composes %}{{ resultat(r) }}{% endfor %}
+  {% else %}<p class="muted">Aucun composé.</p>{% endif %}
+
+  <h3>Publications ({{ resultats.publications|length }})</h3>
+  {% if resultats.publications %}{% for r in resultats.publications %}{{ resultat(r) }}{% endfor %}
+  {% else %}<p class="muted">Aucune publication.</p>{% endif %}
+
+  <h3>Simulations ({{ resultats.simulations|length }})</h3>
+  <p class="muted">Prédictions de calcul — <strong>à confirmer expérimentalement</strong>.</p>
+  {% if resultats.simulations %}{% for r in resultats.simulations %}{{ resultat(r) }}{% endfor %}
+  {% else %}<p class="muted">Aucune simulation.</p>{% endif %}
+
+  <p>
+    {% if page > 1 %}<a href="/recherche-science?{{ base_qs }}&page={{ page - 1 }}">← Précédent</a>{% endif %}
+    {% if page > 1 and (page * limit) < total %} · {% endif %}
+    {% if (page * limit) < total %}<a href="/recherche-science?{{ base_qs }}&page={{ page + 1 }}">Suivant →</a>{% endif %}
+    <span class="muted">(page {{ page }})</span>
+  </p>
+</div>
+{% elif q %}
+<p class="muted">Aucun résultat pour «&nbsp;{{ q }}&nbsp;». Essayez un autre mot-clé.</p>
+{% endif %}
+{% endblock %}

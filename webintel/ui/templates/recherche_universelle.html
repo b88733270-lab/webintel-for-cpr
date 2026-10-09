@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Recherche universelle{% endblock %}
+
+{% macro badge_niveau(b) -%}
+{% if b %}<span class="badge" style="background-color:{{ b.couleur|default("#6e7781", true) }};color:#fff;">{{ b.label|default("—", true) }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro source_liens(src) -%}
+{% if src %}
+  {% if src.doi %}<a href="https://doi.org/{{ src.doi }}" target="_blank" rel="noopener">DOI&nbsp;{{ src.doi }}</a>{% endif %}
+  {% if src.url %}{% if src.doi %} · {% endif %}<a href="{{ src.url }}" target="_blank" rel="noopener">Lien source</a>{% endif %}
+  {% if src.reference and not src.doi and not src.url %}<span class="muted">{{ src.reference }}</span>{% endif %}
+{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<h1>🔎 Recherche universelle</h1>
+<p class="muted">Une seule recherche sur les plantes, molécules, publications et études.
+Chaque résultat affiche son niveau de données et sa source.</p>
+
+<div class="card" style="margin-bottom:1rem;">
+  {% include "_recherche_globale.html" %}
+  <p style="margin-top:0.6rem;">
+    <a class="badge" href="/recherche-en-ligne{% if q %}?q={{ q|urlencode }}&amp;type={{ type_demande|urlencode }}{% endif %}" style="text-decoration:none;">🌐 Rechercher en ligne</a>
+    <span class="muted">PubChem, GBIF et PubMed — aperçu avant import, seul le terme recherché est transmis.</span>
+  </p>
+</div>
+
+{% if erreur %}
+<div class="alert-error"><strong>Erreur.</strong> {{ erreur }}</div>
+{% endif %}
+
+{% if resultats %}
+<p class="muted"><strong>{{ resultats.total }}</strong> résultat(s) pour « {{ q|e }} ».</p>
+
+{% if resultats.plantes %}
+<div class="card">
+  <h2>🌿 Plantes ({{ resultats.plantes|length }})</h2>
+  <ul>
+    {% for r in resultats.plantes %}
+    <li><a href="/plante-etude?q={{ r.libelle|urlencode }}"><em>{{ r.libelle }}</em></a>
+      {% if r.detail %}<span class="muted">— {{ r.detail }}</span>{% endif %}
+      {{ badge_niveau(r.badge) }}
+      <br><span class="muted">Source : {{ source_liens(r.source) or "base WebIntel (donnée normalisée)" }}</span>
+      {% if r.avertissement %}<br><span class="muted">⚠️ {{ r.avertissement }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if resultats.composes %}
+<div class="card">
+  <h2>🧪 Molécules ({{ resultats.composes|length }})</h2>
+  <ul>
+    {% for r in resultats.composes %}
+    <li><a href="/recherche-science?q={{ r.libelle|urlencode }}&type=compose"><strong>{{ r.libelle }}</strong></a>
+      {% if r.detail %}<span class="muted">— {{ r.detail }}</span>{% endif %}
+      {{ badge_niveau(r.badge) }}
+      <br><span class="muted">Source : {{ source_liens(r.source) or "base WebIntel (donnée normalisée)" }}</span>
+      {% if r.avertissement %}<br><span class="muted">⚠️ {{ r.avertissement }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if resultats.publications %}
+<div class="card">
+  <h2>📚 Publications ({{ resultats.publications|length }})</h2>
+  <ul>
+    {% for r in resultats.publications %}
+    <li><strong>{{ r.libelle }}</strong>
+      {% if r.detail %}<span class="muted">— {{ r.detail }}</span>{% endif %}
+      {{ badge_niveau(r.badge) }}
+      <br><span class="muted">Source : {{ source_liens(r.source) or "référence enregistrée" }}</span>
+      {% if r.avertissement %}<br><span class="muted">⚠️ {{ r.avertissement }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if resultats.simulations %}
+<div class="card">
+  <h2>🔬 Études &amp; simulations ({{ resultats.simulations|length }})</h2>
+  <p class="muted">Résultats informatiques — <strong>prédictions / hypothèses</strong>, jamais des preuves.</p>
+  <ul>
+    {% for r in resultats.simulations %}
+    <li><a href="/simulations/{{ r.id }}/rapport"><strong>{{ r.libelle }}</strong></a>
+      {% if r.detail %}<span class="muted">— {{ r.detail }}</span>{% endif %}
+      {{ badge_niveau(r.badge) }}
+      <br><span class="muted">Source : {{ source_liens(r.source) or "calcul WebIntel (votre projet)" }}</span>
+      {% if r.avertissement %}<br><span class="muted">⚠️ {{ r.avertissement }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if resultats.total == 0 %}
+<div class="card">
+  <p class="muted">Aucun résultat local pour « {{ q|e }} ». Vérifiez l'orthographe ou essayez un nom scientifique / un nom local.</p>
+  <h2>Rechercher en ligne ?</h2>
+  <p class="muted">Votre base locale ne contient encore rien pour ce terme. Vous pouvez interroger les sources externes
+  PubChem (molécules), GBIF (plantes) et PubMed (publications) : les résultats s'affichent avant import,
+  avec leur source et leur licence, et vous choisissez ce qui est importé.</p>
+  <p><a class="badge" href="/recherche-en-ligne?q={{ q|urlencode }}&amp;type={{ type_demande|urlencode }}" style="text-decoration:none;">🌐 Rechercher en ligne pour « {{ q|e }} »</a></p>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
