@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Mon laboratoire{% endblock %}
+{% from "_macros.html" import badge_niveau %}
+{% block content %}
+<h1>Mon laboratoire</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — vos données
+privées : notes, observations, simulations. Rien ne devient public sans une
+publication explicite de votre part.</p>
+
+<h2>En chiffres</h2>
+<div class="grid">
+  <div class="card kpi"><div class="label">Plantes étudiées</div><div class="value">{{ comptes.plantes }}</div></div>
+  <div class="card kpi"><div class="label">Composés étudiés</div><div class="value">{{ comptes.composes }}</div></div>
+  <div class="card kpi"><div class="label">Observations</div><div class="value">{{ comptes.observations }}</div></div>
+  <div class="card kpi"><div class="label">Simulations</div><div class="value">{{ comptes.simulations }}</div></div>
+  <div class="card kpi"><div class="label">Notes de laboratoire</div><div class="value">{{ comptes.notes }}</div></div>
+  <div class="card kpi"><div class="label">Workflows</div><div class="value">{{ comptes.workflows if comptes.workflows is not none else "—" }}</div></div>
+  <div class="card kpi"><div class="label">Publications</div><div class="value">{{ comptes.publications }}</div></div>
+</div>
+
+<h2>Derniers ajouts</h2>
+<div class="card">
+  <h3>Observations</h3>
+  {% if derniers.observations %}
+  <table>
+    <tr><th>#</th><th>Auteur</th><th>Statut</th><th>Niveau</th><th>Date</th></tr>
+    {% for item in derniers.observations %}
+    <tr><td>{{ item.id }}</td><td>{{ item.auteur or "—" }}</td><td>{{ item.status or "—" }}</td>
+      <td>{{ badge_niveau(item.data_level) }}</td><td class="muted">{{ item.created_at or "—" }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Aucune observation pour le moment.</p>{% endif %}
+</div>
+<div class="card">
+  <h3>Simulations</h3>
+  {% if derniers.simulations %}
+  <table>
+    <tr><th>#</th><th>Nom</th><th>Statut</th><th>Niveau</th><th>Date</th></tr>
+    {% for item in derniers.simulations %}
+    <tr><td>{{ item.id }}</td><td>{{ item.name or "—" }}</td><td>{{ item.status or "—" }}</td>
+      <td>{{ badge_niveau(item.data_level) }}</td><td class="muted">{{ item.created_at or "—" }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Aucune simulation pour le moment.</p>{% endif %}
+</div>
+<div class="card">
+  <h3>Notes de laboratoire</h3>
+  {% if derniers.notes %}
+  <table>
+    <tr><th>Titre</th><th>Auteur</th><th>Version</th><th>Niveau</th><th>Date</th></tr>
+    {% for item in derniers.notes %}
+    <tr><td><a href="/journal/{{ item.id }}">{{ item.titre or "(sans titre)" }}</a></td>
+      <td>{{ item.auteur or "—" }}</td><td>v{{ item.version_courante }}</td>
+      <td>{{ badge_niveau(item.data_level) }}</td><td class="muted">{{ item.created_at or "—" }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Aucune note pour le moment.</p>{% endif %}
+</div>
+
+<p><a class="btn" href="/journal">Ouvrir le journal de laboratoire</a>
+<a class="btn secondary" href="/workflows" style="margin-left:0.6rem;">Voir les workflows</a></p>
+{% endblock %}

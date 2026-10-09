@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Mes recherches{% endblock %}
+{% block content %}
+<h1>📊 Mes recherches</h1>
+<p class="muted">Vos dossiers de recherche — un dossier correspond à un projet&nbsp;:
+plantes et molécules étudiées, analyses réalisées (études de combinaison,
+simulations, analyses de synergie) et dernière analyse. Les simulations
+restent des <strong>résultats informatiques</strong> (prédictions /
+hypothèses), jamais des preuves.</p>
+
+{% if not dossiers %}
+<div class="card">
+  <p class="muted">Aucun dossier de recherche pour le moment.</p>
+  <p><a class="badge" href="/etudes/nouvelle" style="text-decoration:none;">+ Créer une étude</a>
+     <a class="badge" href="/plante-etude" style="text-decoration:none;">🌿 Étudier une plante</a></p>
+</div>
+{% endif %}
+
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+{% for d in dossiers %}
+<div class="card">
+  <h2>{{ d.nom }}</h2>
+  <p>
+    <span class="badge {% if d.statut == 'Actif' %}ok{% else %}muted{% endif %}">{{ d.statut }}</span>
+  </p>
+  <div class="kv">
+    <span class="muted">Chercheur</span><span>{{ d.chercheur }}</span>
+    <span class="muted">Créé le</span><span>{{ d.date_creation|date_courte }}</span>
+    <span class="muted">Plantes étudiées</span>
+    <span>{% if d.plantes %}{{ d.plantes|join(", ") }}{% else %}—{% endif %}</span>
+    <span class="muted">Molécules étudiées</span>
+    <span>{% if d.composes %}{{ d.composes|join(", ") }}{% else %}—{% endif %}</span>
+    <span class="muted">Analyses</span>
+    <span><strong>{{ d.nb_analyses }}</strong>
+      <span class="muted">({{ d.nb_combinaisons }} combinaison(s), {{ d.nb_simulations }} simulation(s), {{ d.nb_synergies }} synergie(s))</span></span>
+    <span class="muted">Dernière analyse</span>
+    <span>{% if d.derniere_analyse %}{{ d.derniere_analyse.nom }} — {{ d.derniere_analyse.date|date_courte if d.derniere_analyse.date else "" }}{% else %}Aucune{% endif %}</span>
+  </div>
+  <p style="margin-top:0.8rem;"><a class="badge" href="/combinaisons" style="text-decoration:none;">Ouvrir →</a></p>
+</div>
+{% endfor %}
+</div>
+
+<div class="card" style="margin-top:1.2rem;">
+  <h2>Niveaux de données</h2>
+  <p>
+    {% for couleur, label, texte in niveaux %}
+    <span class="badge" style="background-color:{{ couleur }};color:#fff;">{{ label }}</span>
+    <span class="muted">{{ texte }}</span>{% if not loop.last %} &nbsp;·&nbsp; {% endif %}
+    {% endfor %}
+  </p>
+</div>
+{% endblock %}

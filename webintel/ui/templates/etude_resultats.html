@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Analyse de combinaison — résultats{% endblock %}
+{% block content %}
+{% macro badge_preuve(niveau) -%}
+{% set labels = {
+  "publie": "DONNÉE PUBLIÉE",
+  "normalise": "DONNÉE NORMALISÉE",
+  "prediction": "PRÉDICTION",
+  "simulation": "SIMULATION",
+  "hypothese": "HYPOTHÈSE",
+  "experimental": "RÉSULTAT EXPÉRIMENTAL" } %}
+{% set classes = {
+  "publie": "badge-publie",
+  "normalise": "badge-normalise",
+  "prediction": "badge-prediction",
+  "simulation": "badge-prediction",
+  "hypothese": "badge-hypothese",
+  "experimental": "badge-experimental" } %}
+<span class="badge {{ classes.get(niveau, 'muted') }}">{{ labels.get(niveau, niveau) }}</span>
+{%- endmacro %}
+
+<h1>Analyse de combinaison</h1>
+{% include "_barre_progression.html" %}
+
+<h2>Résumé</h2>
+<div class="card frame-prediction">
+  <p><strong>Résultat informatique.</strong>
+  {% set nb_ok = resultats.blocs|selectattr("statut", "equalto", "ok")|list|length %}
+  {% set nb_total = resultats.blocs|length %}
+  {{ nb_ok }} analyse(s) sur {{ nb_total }} ont produit un résultat ;
+  les autres n'ont pas été lancées ou ont échoué — leurs raisons sont
+  indiquées honnêtement ci-dessous, sans valeur inventée.</p>
+  <p class="muted">Objet : <strong>{{ types_objet[etat.type_objet] }}</strong> —
+  {% for m in etat.molecules %}{{ m.nom }}{% if not loop.last %}, {% endif %}{% endfor %}
+  · Mode {{ "avancé" if etat.mode == "avance" else "simple" }}
+  · Calculé le {{ resultats.lance_le }}</p>
+</div>
+
+<h2>Structure</h2>
+{% for bloc in resultats.blocs %}
+<div class="card" id="bloc-{{ loop.index }}">
+  <h3>{{ bloc.titre }} {{ badge_preuve(bloc.niveau) }}
+    {% if bloc.statut == "non_lance" %}<span class="badge muted">non lancé</span>
+    {% elif bloc.statut == "echec" %}<span class="badge bad">échec</span>{% endif %}
+  </h3>
+
+  {% if bloc.statut == "ok" %}
+    <p>{{ bloc.resume }}</p>
+
+    {% if bloc.titre == "Analyse des structures" and bloc.lignes %}
+    <table class="resultats">
+      <tr><th>Molécule A</th><th>Molécule B</th><th>Score — méthode « {{ bloc.provenance.parametres.methode }} »</th><th>≥ seuil</th></tr>
+      {% for p in bloc.lignes %}
+      <tr><td>{{ p.a }}</td><td>{{ p.b }}</td>
+        <td>{% if p.score is not none %}{{ "%.3f"|format(p.score) }}{% else %}<em class="muted">—</em>{% endif %}</td>
+        <td>{% if p.au_dessus_du_seuil %}✓{% else %}—{% endif %}</td></tr>
+      {% endfor %}
+    </table>
+    {% if bloc.variante_avancee %}
+    <h4>{{ bloc.variante_avancee.titre }}</h4>
+    <table class="resultats">
+      <tr><th>Molécule A</th><th>Molécule B</th><th>Tanimoto</th></tr>
+      {% for p in bloc.variante_avancee.paires %}
+      <tr><td>{{ p.a }}</td><td>{{ p.b }}</td>
+        <td>{% if p.score is not none %}{{ "%.3f"|format(p.score) }}{% else %}<em class="muted">—</em>{% endif %}</td></tr>
+      {% endfor %}
+    </table>
+    <p class="muted">{{ bloc.variante_avancee.note }}</p>
+    {% endif %}
+    {% endif %}
+
+    {% if bloc.titre == "Propriétés moléculaires" and bloc.lignes %}
+    <table class="resultats">
+      <tr><th>Molécule</th><th>Masse (g/mol)</th><th>logP</th><th>TPSA (Å²)</th>
+          <th>HBD</th><th>HBA</th><th>Liaisons rotatives</th><th>Csp3</th><th>Lipinski (violations)</th></tr>
+      {% for l in bloc.lignes %}
+      <tr><td><strong>{{ l.nom }}</strong></td>
+        <td>{{ l.masse_molaire if l.masse_molaire is not none else "—" }}</td>
+        <td>{{ "%.2f"|format(l.logp) if l.logp is not none else "—" }}</td>
+        <td>{{ "%.1f"|format(l.tpsa) if l.tpsa is not none else "—" }}</td>
+        <td>{{ l.donneurs_h if l.donneurs_h is not none else "—" }}</td>
+        <td>{{ l.accepteurs_h if l.accepteurs_h is not none else "—" }}</td>
+        <td>{{ l.liaisons_rotatives if l.liaisons_rotatives is not none else "—" }}</td>
+        <td>{{ "%.2f"|format(l.fraction_csp3) if l.fraction_csp3 is not none else "—" }}</td>
+        <td>{{ l.lipinski_violations if l.lipinski_violations is not none else "—" }}</td></tr>
+      {% endfor %}
+    </table>
+    <p class="muted">« — » : propriété non calculable (SMILES manquant ou calcul
+    impossible) — jamais inventée.</p>
+    {% endif %}
+
+    {% if bloc.titre == "Recherche de cibles" and bloc.lignes %}
+    <table class="resultats">
+      <tr><th>Molécule</th><th>Cible documentée</th><th>Interaction</th><th>Affinité</th><th>Source</th></tr>
+      {% for l in bloc.lignes %}
+      <tr><td>{{ l.compose }}</td><td><strong>{{ l.cible }}</strong>
+        {% if l.type_cible %}<span class="muted">({{ l.type_cible }})</span>{% endif %}</td>
+        <td>{{ l.interaction or "—" }}</td>
+        <td>{% if l.affinite %}{{ l.affinite }} {{ l.unite or "" }}{% else %}—{% endif %}</td>
+        <td>{% if l.doi %}<a href="https://doi.org/{{ l.doi }}">{{ l.source or l.doi }}</a>
+            {% else %}{{ l.source or l.publication or "—" }}{% endif %}</td></tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
+    {% if bloc.titre == "Interactions connues" and bloc.lignes %}
+    <ul>
+      {% for l in bloc.lignes %}
+      <li><strong>{{ l.compose_nom }}</strong> ↔ {{ l.cible }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if bloc.titre == "Étude de combinaison" and bloc.lignes %}
+    {% for l in bloc.lignes %}
+    <p>Étude créée : <strong>{{ l.nom }}</strong> (statut : {{ l.statut }}) —
+    <a href="/combinaisons/{{ l.etude_id }}" class="btn secondary">Ouvrir le dossier en 12 points</a></p>
+    {% endfor %}
+    {% endif %}
+
+    {% if bloc.titre == "Docking moléculaire" %}
+    <p class="muted">Paramètres proposés au workflow :
+    seed = {{ bloc.lignes[0].parametres_proposes.seed }},
+    exhaustiveness = {{ bloc.lignes[0].parametres_proposes.exhaustiveness }}.</p>
+    <p><a href="/docking" class="btn secondary">Ouvrir le workflow « Docking moléculaire »</a></p>
+    {% endif %}
+
+    {% if bloc.titre == "Analyse de données expérimentales" and bloc.lignes %}
+    <table class="resultats">
+      <tr><th>Méthode</th><th>Points utilisés</th><th>Score global</th><th>Interprétation</th></tr>
+      {% for l in bloc.lignes %}
+      <tr><td>{{ l.methode }}</td><td>{{ l.points_utilises }}</td>
+        <td>{{ l.score_global if l.score_global is not none else "—" }}</td>
+        <td>{{ l.interpretation or "—" }}</td></tr>
+      {% endfor %}
+    </table>
+    {% if bloc.nature %}
+    <p class="muted"><strong>Nature du résultat :</strong> {{ bloc.nature }} —\n    les mesures elles-mêmes restent des données expérimentales fournies par\n    le laboratoire ; le score est calculé, pas mesuré.</p>
+    {% endif %}
+    {% if bloc.limites %}
+    <h4>Limites de ce calcul</h4>
+    <ul>
+      {% for limite in bloc.limites %}
+      <li>{{ limite }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% endif %}
+
+    {% for explication in bloc.explications_riches %}
+      {% include "_explication.html" %}
+    {% endfor %}
+
+  {% else %}
+    <p class="muted">{{ bloc.note }}</p>
+    {% for explication in bloc.explications_riches %}
+      {% include "_explication.html" %}
+    {% endfor %}
+  {% endif %}
+
+  <p><a href="#provenance-{{ loop.index }}" class="btn secondary">Voir la provenance</a></p>
+  <details class="provenance" id="provenance-{{ loop.index }}">
+    <summary>Provenance — {{ bloc.titre }}</summary>
+    <dl class="kv">
+      <dt>Niveau de preuve</dt><dd>{{ badge_preuve(bloc.niveau) }}</dd>
+      {% if bloc.nature %}
+      <dt>Nature du résultat</dt><dd>{{ bloc.nature }}</dd>
+      {% endif %}
+      {% for k, v in bloc.provenance.items() %}
+      <dt>{{ k }}</dt><dd>{{ v }}</dd>
+      {% endfor %}
+    </dl>
+  </details>
+</div>
+{% endfor %}
+
+<h2>Incertitude</h2>
+<div class="card">
+  <p><strong>Cette analyse est informatique et ne constitue pas une preuve d'effet clinique.</strong></p>
+  <h3>Limites</h3>
+  <ul>
+    {% for limite in resultats.limites %}
+    <li>{{ limite }}</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<p><a href="/etudes/nouvelle" class="btn secondary">← Nouvelle étude</a>
+<a href="/combinaisons" class="btn secondary">Voir les combinaisons</a></p>
+{% endblock %}

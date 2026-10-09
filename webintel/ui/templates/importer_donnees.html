@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Importer mes données de laboratoire{% endblock %}
+{% block content %}
+<h1>Importer mes données de laboratoire</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong></p>
+<p><span class="badge badge-experimental">{{ badge_prive }}</span></p>
+<p class="alert-error"><strong>Données du laboratoire.</strong>
+Le fichier est analysé par le pipeline d'import existant ; un
+<strong>jeu de données privé</strong> est enregistré (empreinte SHA-256,
+rattaché à votre projet). Vos données brutes ne sont
+<strong>jamais fusionnées automatiquement</strong> aux données publiques :
+toute association se fait explicitement, à l'étape suivante.</p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+{% if etape == "televersement" %}
+<div class="card">
+  <h2>1. Téléverser le fichier</h2>
+  <form method="post" action="/donnees/importer" enctype="multipart/form-data">
+    <p><label>Fichier (CSV, JSON ou Excel .xlsx — 10 Mo max)<br>
+      <input type="file" name="fichier" accept=".csv,.json,.xlsx,.sdf" required></label></p>
+    <p><label>Type de données<br>
+      <select name="type_donnees" required>
+        {% for t in types %}
+        <option value="{{ t }}">{% if t == "plante" %}Plantes{% elif t == "compose" %}Molécules (composés){% elif t == "lien" %}Liens plante–molécule{% elif t == "evidence" %}Preuves / publications{% else %}{{ t }}{% endif %}</option>
+        {% endfor %}
+      </select></label></p>
+    <p class="muted">Formats acceptés : {{ formats|join(", ") }}.
+      Colonnes attendues (CSV/Excel, 1ʳᵉ ligne = en-têtes) :
+      <code>nom_scientifique</code> pour les plantes ;
+      <code>nom</code> (+ <code>formule</code>, <code>smiles</code>…) pour les molécules.</p>
+    <p><label>Nom du jeu de données (optionnel)<br>
+      <input type="text" name="nom_jeu" size="60" placeholder="Ex. : criblage mars 2026 — série A"></label></p>
+    <p><label>Description (optionnel)<br>
+      <textarea name="description" rows="3" cols="60" placeholder="Protocole, opérateur, conditions…"></textarea></label></p>
+    <p><button type="submit">Importer mes données</button></p>
+  </form>
+</div>
+{% endif %}
+
+{% if etape == "associer" %}
+<div class="card">
+  <h2>2. Import réussi</h2>
+  <p><span class="badge badge-experimental">{{ badge_prive }}</span>
+  Jeu de données <strong>« {{ dataset.name }} »</strong> (#{{ dataset.id }}) —
+  empreinte SHA-256 : <code>{{ dataset.sha256[:16] }}…</code></p>
+  <ul>
+    <li>Lignes importées : <strong>{{ rapport.get("importes", "—") }}</strong></li>
+    <li>Lignes ignorées : {{ rapport.get("ignores", "—") }}</li>
+    <li>Niveau de données : {{ rapport.get("niveau_donnees", "—") }}</li>
+  </ul>
+  {% if rapport.get("erreurs") %}
+  <details><summary>{{ rapport["erreurs"]|length }} ligne(s) en erreur</summary>
+    <ul>{% for e in rapport["erreurs"][:20] %}<li>Ligne {{ e.get("ligne_numero") }} — {{ e.get("champ") }} : {{ e.get("message") }}</li>{% endfor %}</ul>
+  </details>
+  {% endif %}
+  {% if rapport.get("avertissements") %}
+  <p class="muted">Avertissements : {{ rapport["avertissements"]|join(" ; ") }}</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>3. Associer cet import (optionnel, sans fusion de données)</h2>
+  <p class="muted">L'association enregistre un lien de <em>provenance</em> entre
+  le jeu de données privé et les éléments choisis. Aucune donnée n'est copiée
+  ni fusionnée : les données du laboratoire restent séparées des données publiques.</p>
+  <form method="post" action="/donnees/associer">
+    <input type="hidden" name="dataset_id" value="{{ dataset.id }}">
+    <p><label>Étude de combinaison<br>
+      <select name="assoc_etude"><option value="">— Aucune —</option>
+      {% for e in etudes %}<option value="{{ e.id }}">#{{ e.id }} — {{ e.nom }}</option>{% endfor %}</select></label></p>
+    <p><label>Plante<br>
+      <select name="assoc_plante"><option value="">— Aucune —</option>
+      {% for p in plantes %}<option value="{{ p.id }}">{{ p.scientific_name }}</option>{% endfor %}</select></label></p>
+    <p><label>Molécule<br>
+      <select name="assoc_compose"><option value="">— Aucune —</option>
+      {% for c in composes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></label></p>
+    <p><label>Analyse de synergie<br>
+      <select name="assoc_synergie"><option value="">— Aucune —</option>
+      {% for a in analyses %}<option value="{{ a.id }}">#{{ a.id }} — {{ a.nom }} ({{ a.methode|upper }})</option>{% endfor %}</select></label></p>
+    <p><label>Expérience (journal du laboratoire)<br>
+      <select name="assoc_experience"><option value="">— Aucune —</option>
+      {% for x in experiences %}<option value="{{ x.id }}">#{{ x.id }} — {{ x.protocol_ref or "sans protocole" }} ({{ x.status }})</option>{% endfor %}</select></label></p>
+    <p><button type="submit">Associer</button>
+       <a href="/donnees/importer">Terminer sans association</a></p>
+  </form>
+</div>
+{% endif %}
+
+{% if etape == "termine" %}
+<div class="card">
+  <h2>Import terminé</h2>
+  <p><span class="badge badge-experimental">{{ badge_prive }}</span>
+  Jeu de données <strong>« {{ dataset.name }} »</strong> (#{{ dataset.id }}).</p>
+  {% if associations %}
+  <p>Associations de provenance enregistrées :</p>
+  <ul>{% for a in associations %}<li>{{ a }}</li>{% endfor %}</ul>
+  {% else %}
+  <p class="muted">Aucune association demandée — le jeu de données reste
+  disponible dans votre projet, sans lien.</p>
+  {% endif %}
+  <p><a href="/donnees/importer">Importer un autre fichier</a> ·
+     <a href="/laboratoire">Retour au laboratoire</a></p>
+</div>
+{% endif %}
+{% endblock %}

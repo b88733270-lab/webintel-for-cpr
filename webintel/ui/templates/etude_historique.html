@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Historique — {{ etude.nom }}{% endblock %}
+{% block content %}
+<h1>Historique versionné — {{ etude.nom }}</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> ·
+Étude #{{ etude.id }} · {{ versions|length }} version(s) enregistrée(s)</p>
+<p class="alert-error"><strong>Journal append-only.</strong>
+La restauration d'une version crée <strong>toujours une nouvelle
+étude et une nouvelle version</strong> : aucune version existante n'est
+ni modifiée ni écrasée.</p>
+
+{% if message %}<div class="card"><p><strong>{{ message }}</strong></p></div>{% endif %}
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<div class="card">
+  <h2>Enregistrer l'état actuel</h2>
+  <form method="post" action="/etudes/{{ etude.id }}/historique/instantane">
+    <p><button type="submit">Enregistrer un instantané de l'état actuel</button></p>
+  </form>
+</div>
+
+<h2>Versions</h2>
+{% if versions %}
+<table>
+  <tr><th>Version</th><th>Date</th><th>Résumé</th><th>Enregistrée par</th><th></th></tr>
+  {% for v in versions %}
+  <tr>
+    <td><strong>Version {{ v.numero }}</strong></td>
+    <td class="muted">{{ v.cree_le|date_courte }}</td>
+    <td>{{ v.resume }}</td>
+    <td class="muted">{{ v.cree_par or "—" }}</td>
+    <td>
+      <form method="post" action="/etudes/{{ etude.id }}/historique/restaurer"
+            data-confirm="Restaurer la version {{ v.numero }} ? Une NOUVELLE étude et une NOUVELLE version seront créées ; rien ne sera écrasé.">
+        <input type="hidden" name="version_id" value="{{ v.id }}">
+        <button type="submit">Restaurer cette version</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="muted">Aucune version enregistrée pour le moment. Utilisez le bouton
+« Enregistrer un instantané » ci-dessus pour photographier l'état actuel de l'étude.</p>
+{% endif %}
+
+<p><a href="/etudes/{{ etude.id }}/rapport">Voir le rapport de l'étude</a> ·
+   <a href="/combinaisons">← Retour aux combinaisons</a></p>
+{% endblock %}

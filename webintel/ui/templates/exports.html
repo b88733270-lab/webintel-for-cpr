@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Exports{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Exports</h1>
+  <p class="muted">Projet : <strong>{{ project.name }}</strong> — générez un fichier téléchargeable
+  (JSON, CSV ou XLSX) à partir des données collectées. Retrouvez aussi le
+  <a href="/rapport">rapport complet du dossier</a>.</p>
+</div>
+
+{% if message %}<div class="alert-ok" role="status">{{ message }}
+  {% if download_url %}<a href="{{ download_url }}">Télécharger le fichier</a>{% endif %}</div>{% endif %}
+
+<div class="card">
+  <h2>Nouvel export</h2>
+  <form class="inline" method="post" action="/exports">
+    <div class="field"><label for="kind">Données</label>
+      <select id="kind" name="kind">
+        <option value="entities">Entités</option><option value="events">Événements</option>
+        <option value="snapshots">Snapshots</option><option value="monitors">Moniteurs</option>
+      </select></div>
+    <div class="field"><label for="format">Format</label>
+      <select id="format" name="format">
+        <option value="csv">CSV</option><option value="json">JSON</option><option value="xlsx">XLSX</option>
+      </select></div>
+    <button type="submit">Générer</button>
+  </form>
+  <details><summary>Formats</summary>
+    <p class="muted">JSON : UTF-8 indenté, sans échappement des accents. CSV : UTF-8 avec BOM
+    (ouverture directe dans Excel), en-têtes = union des colonnes. XLSX : en-têtes en gras,
+    largeurs de colonnes ajustées.</p>
+  </details>
+</div>
+
+<div class="empty-state">
+  <div class="empty-ico" aria-hidden="true">⤓</div>
+  <h3>Historique des exports</h3>
+  <p class="muted">Les fichiers sont générés à la demande ci-dessus et
+  téléchargés immédiatement. Aucun fichier n'est listé sans génération réelle.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Assistant d'étude — étape 4{% endblock %}
+{% block content %}
+<h1>Assistant de création d'étude</h1>
+{% include "_barre_progression.html" %}
+
+<h2>Étape 4 — Vérification</h2>
+<p class="muted">Relisez ce qui sera lancé. Rien n'est encore calculé.</p>
+
+<div class="mode-switch">
+  <strong>Mode :</strong>
+  {% if etat.mode == "avance" %}
+    <span>🔧 Avancé</span> —
+    <a href="/etudes/etape4?session={{ session_id }}&mode=simple">passer en mode simple</a>
+  {% else %}
+    <span>🙂 Simple</span> —
+    <a href="/etudes/etape4?session={{ session_id }}&mode=avance">passer en mode avancé</a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Objet de l'étude</h3>
+  <p><strong>{{ types_objet[etat.type_objet] }}</strong></p>
+  <ul>
+    {% for m in etat.molecules %}
+    <li><strong>{{ m.nom }}</strong>
+      {% if m.smiles %}<span class="muted">— SMILES renseigné</span>{% else %}<span class="muted">— sans SMILES (calculs de structure impossibles)</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="card">
+  <h3>Analyses qui seront lancées ({{ etat.analyses|length }})</h3>
+  <ul>
+    {% for a in etat.analyses %}
+    <li><strong>{{ analyses[a] }}</strong></li>
+    {% endfor %}
+  </ul>
+  {% if etat.mode == "avance" %}
+  <h4>Paramètres avancés</h4>
+  <dl class="kv">
+    <dt>Méthode de similarité</dt><dd>{{ etat.params.get("methode_similarite", "structure") }}</dd>
+    <dt>Rayon de Morgan / taille d'empreinte</dt><dd>{{ etat.params.get("rayon_morgan", 2) }} / {{ etat.params.get("taille_empreinte", 2048) }}</dd>
+    <dt>Seuil d'affichage Tanimoto</dt><dd>{{ etat.params.get("seuil_tanimoto", 0.7) }}</dd>
+    <dt>Seed Vina / exhaustiveness</dt><dd>{{ etat.params.get("seed_vina", 42) }} / {{ etat.params.get("exhaustiveness", 8) }}</dd>
+    {% if "experimentales" in etat.analyses %}
+    <dt>Méthode de synergie</dt><dd>{{ (etat.donnees_exp or {}).get("methode", "bliss") }}</dd>
+    <dt>Points de mesure fournis</dt><dd>{{ ((etat.donnees_exp or {}).get("points") or [])|length }}</dd>
+    {% endif %}
+  </dl>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Rappel</h3>
+  <p><strong>Résultat informatique</strong> — les analyses produisent des
+  prédictions, des hypothèses et des descriptions de données publiées.
+  Cette analyse est informatique et ne constitue pas une preuve
+  d'effet clinique.</p>
+</div>
+
+<form method="post" action="/etudes/lancer?session={{ session_id }}">
+  <p><button type="submit">🚀 Lancer les analyses</button>
+  <a href="/etudes/etape3?session={{ session_id }}" class="btn secondary">← Modifier les analyses</a></p>
+</form>
+{% endblock %}

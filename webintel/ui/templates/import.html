@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Import de données{% endblock %}
+
+{% block content %}
+<h1>Import de données</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — importez un fichier
+de données scientifiques (CSV ou JSON). Le rapport d'import s'affiche ci-dessous,
+erreurs ligne par ligne.</p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<div class="card">
+  <h2>Fichier à importer</h2>
+  <form method="post" action="/import" enctype="multipart/form-data">
+    <p>
+      <label for="fichier"><strong>Fichier</strong> (CSV ou JSON) :</label><br>
+      <input type="file" id="fichier" name="fichier" accept=".csv,.json,.txt" required>
+    </p>
+    <p>
+      <label for="type_donnees"><strong>Type de données</strong> :</label><br>
+      <select id="type_donnees" name="type_donnees" required>
+        <option value="plante" {% if type_donnees == "plante" %}selected{% endif %}>Plante</option>
+        <option value="compose" {% if type_donnees == "compose" %}selected{% endif %}>Composé</option>
+        <option value="lien" {% if type_donnees == "lien" %}selected{% endif %}>Lien plante-composé</option>
+        <option value="evidence" {% if type_donnees == "evidence" %}selected{% endif %}>Preuve (evidence)</option>
+      </select>
+    </p>
+    <p><button type="submit">Importer</button></p>
+  </form>
+</div>
+
+{% if rapport %}
+<div class="card" style="border:2px solid #1a7f37;">
+  <h2>Rapport d'import</h2>
+  <table>
+    <tr><th>Créés</th><td><strong>{{ rapport.get("crees", 0) }}</strong></td></tr>
+    <tr><th>Mis à jour</th><td><strong>{{ rapport.get("mis_a_jour", 0) }}</strong></td></tr>
+    <tr><th>Ignorés</th><td><strong>{{ rapport.get("ignores", 0) }}</strong></td></tr>
+  </table>
+  {% set erreurs = rapport.get("erreurs") or [] %}
+  <h3>Erreurs ({{ erreurs|length }})</h3>
+  {% if erreurs %}
+  <table>
+    <tr><th>Ligne</th><th>Erreur</th></tr>
+    {% for e in erreurs %}
+    <tr>
+      <td>{{ e.get("ligne", "—") }}</td>
+      <td>{{ e.get("erreur", e) }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="muted">Aucune erreur : toutes les lignes ont été traitées.</p>
+  {% endif %}
+</div>
+{% endif %}
+
+<p><a href="/export">← Aller aux exports</a></p>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Assistant d'étude — étape 3{% endblock %}
+{% block content %}
+<h1>Assistant de création d'étude</h1>
+{% include "_barre_progression.html" %}
+
+<h2>Étape 3 — Quel type d'analyse ?</h2>
+<p class="muted">{{ etat.molecules|length }} molécule(s) sélectionnée(s) :
+{% for m in etat.molecules %}<strong>{{ m.nom }}</strong>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<div class="mode-switch">
+  <strong>Mode :</strong>
+  {% if etat.mode == "avance" %}
+    <span>🔧 Avancé</span> —
+    <a href="/etudes/etape3?session={{ session_id }}&mode=simple">passer en mode simple</a>
+  {% else %}
+    <span>🙂 Simple</span> (paramètres par défaut, aucun jargon) —
+    <a href="/etudes/etape3?session={{ session_id }}&mode=avance">passer en mode avancé</a>
+  {% endif %}
+</div>
+
+<form method="post" action="/etudes/etape3?session={{ session_id }}">
+  <input type="hidden" name="mode" value="{{ etat.mode }}">
+  <div class="wizard-cards">
+    <label class="wizard-card">
+      <h3><input type="checkbox" name="analyses" value="structures"
+        {% if "structures" in etat.analyses %}checked{% endif %}> Analyse des structures</h3>
+      <p>Compare les structures moléculaires (similarité de Tanimoto). Résultat informatique.</p>
+    </label>
+    <label class="wizard-card">
+      <h3><input type="checkbox" name="analyses" value="proprietes"
+        {% if "proprietes" in etat.analyses %}checked{% endif %}> Propriétés moléculaires</h3>
+      <p>logP, TPSA, masse… estimés par calcul. Estimations théoriques.</p>
+    </label>
+    <label class="wizard-card">
+      <h3><input type="checkbox" name="analyses" value="cibles"
+        {% if "cibles" in etat.analyses %}checked{% endif %}> Recherche de cibles</h3>
+      <p>Cibles biologiques documentées dans la littérature pour vos molécules.</p>
+    </label>
+    <label class="wizard-card">
+      <h3><input type="checkbox" name="analyses" value="interactions"
+        {% if "interactions" in etat.analyses %}checked{% endif %}> Interactions connues</h3>
+      <p>Description du réseau composé ↔ cible à partir des liens enregistrés.</p>
+    </label>
+    <label class="wizard-card">
+      <h3><input type="checkbox" name="analyses" value="combinaison"
+        {% if "combinaison" in etat.analyses %}checked{% endif %}> Étude de combinaison</h3>
+      <p>Dossier de screening structural en 12 points (hypothèses, pas de preuve).</p>
+    </label>
+    <label class="wizard-card">
+      <h3><input type="checkbox" name="analyses" value="docking"
+        {% if "docking" in etat.analyses %}checked{% endif %}> Docking moléculaire</h3>
+      <p>Prépare le docking (non exécuté ici : exige récepteur PDBQT + Vina).</p>
+    </label>
+    <label class="wizard-card">
+      <h3><input type="checkbox" name="analyses" value="experimentales"
+        {% if "experimentales" in etat.analyses %}checked{% endif %}> Analyse de données expérimentales</h3>
+      <p>Synergie (Bliss, Loewe, HSA, ZIP) calculée sur VOS mesures — jamais sans données réelles.</p>
+    </label>
+  </div>
+
+  {% if etat.mode == "avance" %}
+  <h3>Paramètres avancés</h3>
+  <div class="card">
+    <h4>Similarité des structures</h4>
+    <p><label>Méthode
+      <select name="methode_similarite">
+        {% for m in methodes_similarite %}
+        <option value="{{ m }}" {% if etat.params.get("methode_similarite", "structure") == m %}selected{% endif %}>{{ m }}{% if m == "combinee" %} — heuristique non structurelle{% endif %}</option>
+        {% endfor %}
+      </select></label>
+      <span class="muted">— « structure » = Tanimoto de Morgan via RDKit (défaut) ; « combinee » = <strong>heuristique non structurelle</strong> (moyenne pondérée formule/InChIKey/classe — aucun calcul de structure).</span></p>
+    <p><label>Rayon de Morgan <input type="number" name="rayon_morgan" min="0" max="4"
+      value="{{ etat.params.get('rayon_morgan', 2) }}"></label>
+    <label>Taille de l'empreinte <input type="number" name="taille_empreinte" min="64" max="8192" step="64"
+      value="{{ etat.params.get('taille_empreinte', 2048) }}"></label></p>
+    <p><label>Seuil d'affichage Tanimoto <input type="number" name="seuil_tanimoto" min="0" max="1" step="0.05"
+      value="{{ etat.params.get('seuil_tanimoto', 0.7) }}"></label>
+      <span class="muted">— met en évidence les paires au-dessus du seuil (affichage uniquement).</span></p>
+
+    <h4>Docking moléculaire (paramètres proposés au workflow)</h4>
+    <p><label>Seed Vina <input type="number" name="seed_vina" min="0"
+      value="{{ etat.params.get('seed_vina', 42) }}"></label>
+    <label>Exhaustiveness <input type="number" name="exhaustiveness" min="1" max="32"
+      value="{{ etat.params.get('exhaustiveness', 8) }}"></label>
+      <span class="muted">— reproductibilité et effort de recherche.</span></p>
+
+    <h4>Données expérimentales (synergie)</h4>
+    <p><label>Méthode
+      <select name="methode_synergie">
+        {% for m in methodes_synergie %}
+        <option value="{{ m }}" {% if etat.params.get("methode_synergie", "bliss") == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+      </select></label></p>
+    <p><label>Vos mesures — une ligne par point :<br>
+      <textarea name="donnees_exp" rows="6" cols="70"
+        placeholder="dose_a,dose_b,reponse_a,reponse_b,reponse_ab&#10;# Exemple :&#10;10,10,0.30,0.25,0.55"># Exemple (à remplacer par vos mesures) :&#10;# dose_a,dose_b,reponse_a,reponse_b,reponse_ab&#10;</textarea></label></p>
+    <p class="muted">Sans mesures réelles, aucun score de synergie ne sera calculé.</p>
+  </div>
+  {% endif %}
+
+  <p><button type="submit">Continuer →</button>
+  <a href="/etudes/etape2?session={{ session_id }}" class="btn secondary">← Retour</a></p>
+</form>
+{% endblock %}

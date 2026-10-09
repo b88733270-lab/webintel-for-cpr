@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Moniteurs{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Moniteurs</h1>
+  <p class="muted">Projet : <strong>{{ project.name }}</strong> — surveillance périodique des pages
+  et détection d'événements (prix, disponibilité, contenu…). La surveillance
+  réseau nécessite une connexion ; hors-ligne, les passages sont reportés.</p>
+</div>
+
+{% if error %}<div class="alert-error" role="alert">{{ error }}
+  <p style="margin:.5rem 0 0;"><a class="btn btn-sm secondary" href="/moniteurs">Réessayer</a></p></div>{% endif %}
+
+<div class="card">
+  <h2>Créer un moniteur</h2>
+  <form class="inline" method="post" action="/moniteurs">
+    <div class="field"><label for="name">Nom</label>
+      <input type="text" id="name" name="name" placeholder="Prix — Chaise scandinave" size="30" required></div>
+    <div class="field"><label for="target_type">Type de cible</label>
+      <select id="target_type" name="target_type">
+        <option value="url">URL</option><option value="domain">Domaine</option>
+        <option value="product">Produit</option><option value="price">Prix</option>
+        <option value="keyword">Mot-clé</option>
+      </select></div>
+    <div class="field"><label for="target">Cible</label>
+      <input type="text" id="target" name="target" placeholder="https://exemple.fr/produit" size="40" required></div>
+    <div class="field"><label for="interval_minutes">Intervalle (min)</label>
+      <input type="number" id="interval_minutes" name="interval_minutes" value="60" min="1"></div>
+    <button type="submit">Créer</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Moniteurs ({{ monitors | length }})</h2>
+  {% if monitors %}
+  <div class="table-wrap">
+  <table class="responsive-cards"><thead><tr><th>Nom</th><th>Cible</th><th>Intervalle</th><th>Dernier passage</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for m in monitors %}
+    <tr><td data-label="Nom">{{ m.name }}</td>
+        <td data-label="Cible"><span class="badge muted">{{ m.target_type }}</span> <span class="muted">{{ m.target | truncate(50) }}</span></td>
+        <td data-label="Intervalle">{{ m.interval_minutes }} min</td>
+        <td data-label="Dernier passage" class="muted">{{ m.last_run_at|date_courte if m.last_run_at else "jamais" }}</td>
+        <td data-label="Actions">
+          <form method="post" action="/moniteurs/{{ m.id }}/run" style="display:inline">
+            <button type="submit" class="secondary btn-sm">Exécuter</button>
+          </form>
+          <form method="post" action="/moniteurs/{{ m.id }}/delete" style="display:inline"
+                data-confirm="Supprimer ce moniteur ?">
+            <button type="submit" class="danger btn-sm">Supprimer</button>
+          </form>
+        </td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-ico" aria-hidden="true">◉</div>
+    <h3>Aucun moniteur</h3>
+    <p class="muted">Aucun moniteur. Créez-en un ci-dessus pour suivre une page,
+    un prix ou un mot-clé dans le temps.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

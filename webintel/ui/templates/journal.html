@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Journal de laboratoire{% endblock %}
+{% from "_macros.html" import badge_niveau %}
+{% block content %}
+<h1>Journal de laboratoire</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — vos notes
+d'expériences, protocoles et résultats. Données <strong>expérimentales et
+privées</strong> : chaque modification crée une nouvelle version, jamais de
+modification silencieuse.</p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<h2>Nouvelle note</h2>
+<div class="card">
+  <form method="post" action="/journal" class="inline">
+    <div class="field"><label for="titre">Titre</label>
+      <input type="text" id="titre" name="titre" value="{{ form.titre }}" placeholder="ex. Extraction feuilles Artemisia"></div>
+    <div class="field"><label for="auteur">Auteur (optionnel)</label>
+      <input type="text" id="auteur" name="auteur" value="{{ form.auteur }}" placeholder="Votre nom"></div>
+    <div class="field" style="flex-basis:100%;"><label for="contenu">Contenu</label>
+      <textarea id="contenu" name="contenu" rows="5" cols="70" placeholder="Protocole, observations, résultats bruts…">{{ form.contenu }}</textarea></div>
+    <button type="submit">Créer la note</button>
+  </form>
+</div>
+
+<h2>Notes ({{ notes|length }})</h2>
+{% if notes %}
+<table>
+  <tr><th>Titre</th><th>Auteur</th><th>Version</th><th>Niveau</th><th>Statut</th><th>Modifiée le</th></tr>
+  {% for note in notes %}
+  <tr>
+    <td><a href="/journal/{{ note.id }}"><strong>{{ note.titre or "(sans titre)" }}</strong></a></td>
+    <td>{{ note.auteur or "—" }}</td>
+    <td>v{{ note.version_courante }}</td>
+    <td>{{ badge_niveau(note.data_level) }}</td>
+    <td>{% if note.publie %}<span class="badge ok">Publiée</span>{% else %}<span class="badge muted">Privée</span>{% endif %}</td>
+    <td class="muted">{{ note.updated_at or "—" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="muted">Aucune note pour le moment — créez la première ci-dessus.</p>
+{% endif %}
+{% endblock %}

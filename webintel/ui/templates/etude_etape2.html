@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Assistant d'étude — étape 2{% endblock %}
+{% block content %}
+<h1>Assistant de création d'étude</h1>
+{% include "_barre_progression.html" %}
+
+<h2>Étape 2 — Choisissez vos éléments</h2>
+<p class="muted">Objet : <strong>{{ types_objet[etat.type_objet] }}</strong></p>
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+{% if message %}<p>{{ message }}</p>{% endif %}
+
+{% if etat.type_objet == "plante" %}
+<h3>Plante de départ</h3>
+<form method="post" action="/etudes/etape2?session={{ session_id }}">
+  <input type="hidden" name="action" value="choisir_plante">
+  <p><label>Plante
+    <select name="plante_id">
+      <option value="">— choisir —</option>
+      {% for p in plantes %}
+      <option value="{{ p.id }}" {% if plante and p.id == plante.id %}selected{% endif %}>{{ p.scientific_name }}</option>
+      {% endfor %}
+    </select></label>
+  <button type="submit" class="secondary">Afficher ses composés</button></p>
+</form>
+
+{% if plante %}
+<h3>Composés documentés de <em>{{ plante.scientific_name }}</em></h3>
+<form method="post" action="/etudes/etape2?session={{ session_id }}">
+  <input type="hidden" name="action" value="continuer">
+  {% if composes_plante %}
+  <ul class="checklist">
+    {% for item in composes_plante %}
+    <li><label><input type="checkbox" name="compound_ids" value="{{ item.compose.id }}">
+      <strong>{{ item.compose.name }}</strong>
+      {% if item.compose.formula %}<span class="muted">{{ item.compose.formula }}</span>{% endif %}
+      {% if item.partie %}<span class="muted">— partie : {{ item.partie }}</span>{% endif %}
+      {% if item.publication %}<span class="muted">— {{ item.publication }}{% if item.annee %} ({{ item.annee }}){% endif %}</span>{% endif %}
+      <span class="badge badge-publie">DONNÉE PUBLIÉE</span>
+    </label></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">Aucun composé documenté en base pour cette plante. Ajoutez une molécule ci-dessous.</p>
+  {% endif %}
+  <p><button type="submit">Continuer →</button></p>
+</form>
+{% endif %}
+{% endif %}
+
+{% if etat.type_objet != "plante" or plante %}
+<h3>Composés de la base</h3>
+<form method="get" action="/etudes/etape2">
+  <input type="hidden" name="session" value="{{ session_id }}">
+  <p><label>Rechercher <input type="text" name="q" value="{{ q }}" size="30" placeholder="nom du composé"></label>
+  <button type="submit" class="secondary">Rechercher</button></p>
+</form>
+<form method="post" action="/etudes/etape2?session={{ session_id }}">
+  <input type="hidden" name="action" value="continuer">
+  {% if composes %}
+  <ul class="checklist">
+    {% for c in composes %}
+    <li><label><input type="checkbox" name="compound_ids" value="{{ c.id }}">
+      <strong>{{ c.name }}</strong>
+      {% if c.formula %}<span class="muted">{{ c.formula }}</span>{% endif %}
+      {% if c.smiles %}<span class="muted">— SMILES renseigné</span>{% endif %}
+    </label></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">Aucun composé en base{% if q %} pour « {{ q }} »{% endif %}.</p>
+  {% endif %}
+  <p><button type="submit">Continuer →</button></p>
+</form>
+{% endif %}
+
+<h3>Ajouter une molécule (sans la base)</h3>
+<p class="muted">Nommez simplement la molécule ; le SMILES est optionnel mais
+recommandé pour les calculs de structure (jamais de JSON à écrire).</p>
+<form method="post" action="/etudes/etape2?session={{ session_id }}">
+  <input type="hidden" name="action" value="ajouter">
+  <p><label>Nom <input type="text" name="nom_mol" size="30" placeholder="Ex. Quercétine"></label></p>
+  <p><label>SMILES (optionnel) <input type="text" name="smiles_mol" size="50" placeholder="Ex. C1=CC(=C(C=C1)..."></label></p>
+  <p><button type="submit" class="secondary">+ Ajouter à ma sélection</button></p>
+</form>
+
+{% if etat.molecules %}
+<h3>Ma sélection ({{ etat.molecules|length }})</h3>
+<ul>
+  {% for m in etat.molecules %}
+  <li><strong>{{ m.nom }}</strong>
+    {% if m.smiles %}<span class="muted">— SMILES renseigné</span>{% else %}<span class="muted">— sans SMILES</span>{% endif %}
+    <span class="muted">({{ "base" if m.source == "base" else "saisie" }})</span></li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<p><a href="/etudes/nouvelle">← Recommencer</a></p>
+{% endblock %}

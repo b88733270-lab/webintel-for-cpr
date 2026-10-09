@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Paramètres{% endblock %}
+{% block content %}
+<h1>Paramètres</h1>
+
+{% if message %}
+<div class="alert-ok" style="border-left:4px solid #1a7f37;">{{ message }}</div>
+{% endif %}
+
+<div class="card">
+  <h2>Services &amp; clés API</h2>
+  <p class="muted">Les fournisseurs de recherche Web se configurent par
+  variables d'environnement sur la machine qui fait tourner WebIntel.
+  Aucune clé n'est saisie ni conservée en clair dans l'interface : définissez
+  la variable, puis redémarrez l'application. Le statut ci-dessous indique
+  seulement si la variable est présente au démarrage, jamais sa valeur.</p>
+  {% set services = services_api | default([
+    {"nom": "Brave Search", "variable": "WEBINTEL_BRAVE_API_KEY", "configure": none, "usage": "Recherche Web générale"},
+    {"nom": "Tavily", "variable": "WEBINTEL_TAVILY_API_KEY", "configure": none, "usage": "Recherche et extraction Web"},
+    {"nom": "SerpApi", "variable": "WEBINTEL_SERPAPI_API_KEY", "configure": none, "usage": "Résultats de moteurs de recherche"},
+    {"nom": "NewsAPI", "variable": "WEBINTEL_NEWSAPI_API_KEY", "configure": none, "usage": "Actualités et événements"}
+  ], true) %}
+  <div class="table-wrap">
+  <table class="responsive-cards">
+    <thead><tr><th>Service</th><th>Variable d'environnement</th><th>Clé</th><th>Statut</th></tr></thead>
+    <tbody>
+    {% for s in services %}
+    <tr>
+      <td data-label="Service"><strong>{{ s.nom }}</strong><br><span class="muted">{{ s.usage }}</span></td>
+      <td data-label="Variable"><code class="mono nowrap">{{ s.variable }}</code></td>
+      <td data-label="Clé"><input type="password" value="" placeholder="••••••••" disabled autocomplete="off" aria-label="Clé {{ s.nom }} (masquée, lecture seule)"></td>
+      <td data-label="Statut">
+        {% if s.configure is none %}<span class="badge muted">Statut au démarrage</span>
+          <span class="muted">Définissez <code>{{ s.variable }}</code> puis redémarrez pour activer ce fournisseur.</span>
+        {% elif s.configure %}<span class="badge ok">Configurée</span>
+        {% else %}<span class="badge warn">Non configurée</span>
+          <span class="muted">Définissez <code>{{ s.variable }}</code> puis redémarrez.</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <details><summary>Où définir les variables ?</summary>
+    <p class="muted">Dans le fichier <code>.env</code> ou l'environnement du
+    processus WebIntel, par exemple :<br>
+    <code>WEBINTEL_BRAVE_API_KEY=…</code> (remplacez par votre clé, sans la
+    partager). Sans clé, WebIntel utilise les fournisseurs disponibles et
+    signale clairement ceux qui manquent — aucune recherche n'est présentée
+    comme disponible hors-ligne.</p>
+  </details>
+</div>
+
+<div class="card">
+  <h2>Outils scientifiques <span class="muted">(RDKit installé par défaut)</span></h2>
+  <p class="muted">
+    WebIntel fonctionne en mode <strong>CORE</strong> (léger) sans ces outils.
+    RDKit (installé par défaut) débloque la chimoinformatique réelle
+    (similarité structurelle, descripteurs moléculaires, docking). Sans eux,
+    l'application indique explicitement ce qui n'est pas calculable —
+    <strong>aucune valeur n'est jamais inventée</strong>.
+  </p>
+  <table>
+    <tr>
+      <th>Outil</th><th>État</th><th>Version</th><th>Ce que ça change</th>
+    </tr>
+    <tr>
+      <td><strong>RDKit</strong> <span class="muted">(chimoinformatique)</span></td>
+      <td>
+        {% if outils_scientifiques.rdkit.disponible %}
+        <span class="badge" style="background-color:#1a7f37;color:#fff;border:none;">Présent</span>
+        {% else %}
+        <span class="badge" style="background-color:#6e7781;color:#fff;border:none;">Absent</span>
+        {% endif %}
+      </td>
+      <td>{{ outils_scientifiques.rdkit.version or "—" }}</td>
+      <td class="muted">Empreintes de Morgan + Tanimoto réel, descripteurs (logP, HBD/HBA, TPSA, Lipinski), sous-structures, préparation des ligands.</td>
+    </tr>
+    <tr>
+      <td><strong>Meeko</strong> <span class="muted">(préparation PDBQT)</span></td>
+      <td>
+        {% if outils_scientifiques.meeko.disponible %}
+        <span class="badge" style="background-color:#1a7f37;color:#fff;border:none;">Présent</span>
+        {% else %}
+        <span class="badge" style="background-color:#6e7781;color:#fff;border:none;">Absent</span>
+        {% endif %}
+      </td>
+      <td>{{ outils_scientifiques.meeko.version or "—" }}</td>
+      <td class="muted">Conversion SMILES → PDBQT pour le docking (avec RDKit). Sans Meeko : fournissez un ligand PDBQT déjà préparé.</td>
+    </tr>
+    <tr>
+      <td><strong>AutoDock Vina</strong> <span class="muted">(docking)</span></td>
+      <td>
+        {% if outils_scientifiques.vina.disponible %}
+        <span class="badge" style="background-color:#1a7f37;color:#fff;border:none;">Présent</span>
+        {% else %}
+        <span class="badge" style="background-color:#6e7781;color:#fff;border:none;">Absent</span>
+        {% endif %}
+      </td>
+      <td>{{ outils_scientifiques.vina.version or "—" }}</td>
+      <td class="muted">Active le moteur <code>docking_adapter</code> (vrai docking local). Sans Vina : refus explicite, jamais de faux score.</td>
+    </tr>
+  </table>
+  {% if not outils_scientifiques.rdkit.disponible %}
+  <p><strong>Installer RDKit</strong> (dans le dossier de WebIntel)&nbsp;:</p>
+  <pre><code>./scripts/install_science.sh
+# ou : pip install -e ".[science]"</code></pre>
+  {% endif %}
+  {% if not outils_scientifiques.meeko.disponible %}
+  <p><strong>Installer Meeko</strong> (préparation SMILES → PDBQT, dans le dossier de WebIntel)&nbsp;:</p>
+  <pre><code>pip install meeko
+# ou : pip install -e ".[science]"</code></pre>
+  {% endif %}
+  {% if not outils_scientifiques.vina.disponible %}
+  <p><strong>Installer AutoDock Vina</strong>&nbsp;:</p>
+  <pre><code>sudo apt install autodock-vina        # Debian/Ubuntu
+# ou : conda install -c conda-forge autodock-vina</code></pre>
+  {% endif %}
+  <p class="muted">
+    Détails : <code>docs/runtime_scientifique.md</code> et
+    <code>docs/simulations.md</code>.
+  </p>
+  <p><a href="/outils-scientifiques">→ Page dédiée : statut détaillé, licences et installation des outils scientifiques</a></p>
+</div>
+
+<div class="card">
+  <h2>Intelligence artificielle</h2>
+  <p>
+    État actuel&nbsp;:
+    {% if ia_activee %}
+    <span class="badge" style="background-color:#1a7f37;color:#fff;border:none;">Activée</span>
+    {% else %}
+    <span class="badge" style="background-color:#6e7781;color:#fff;border:none;">Désactivée</span>
+    {% endif %}
+    <span class="muted">(décision : {{ source_decision }})</span>
+  </p>
+  <p class="muted">
+    Quand l'IA est désactivée, <strong>aucune</strong> fonction d'IA n'est exécutée
+    ni proposée : les boutons disparaissent de l'interface, l'API répond
+    « fonctionnalité désactivée », et aucun appel n'est effectué en arrière-plan.
+    Les synthèses générées restent toujours étiquetées « hypothèse », citent
+    leurs sources et ne sont jamais enregistrées comme des faits.
+  </p>
+  <form method="post" action="/parametres">
+    <label>
+      <input type="checkbox" name="ia_activee" {% if ia_activee %}checked{% endif %}>
+      Activer les fonctionnalités d'IA (synthèse automatique des fiches)
+    </label>
+    <br><br>
+    <button type="submit" name="action" value="appliquer">Appliquer</button>
+    {% if source_decision == "interface" %}
+    <button type="submit" name="action" value="reinitialiser">Réinitialiser (retour à la variable d'environnement)</button>
+    {% endif %}
+  </form>
+  <p class="muted">
+    Variable d'environnement équivalente&nbsp;: <code>WEBINTEL_AI_ENABLED=false</code>
+    (redémarrage nécessaire). La case ci-dessus s'applique immédiatement et
+    prend le pas sur la variable tant qu'elle n'est pas réinitialisée.
+  </p>
+</div>
+{% endblock %}

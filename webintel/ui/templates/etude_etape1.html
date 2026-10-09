@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Assistant d'étude — étape 1{% endblock %}
+{% block content %}
+<h1>Assistant de création d'étude</h1>
+{% include "_barre_progression.html" %}
+
+<h2>Étape 1 — Que voulez-vous étudier ?</h2>
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+
+<form method="post" action="/etudes/etape1">
+  <div class="wizard-cards">
+    <label class="wizard-card">
+      <h3><input type="radio" name="type_objet" value="plante" required> 🌿 Une plante</h3>
+      <p>Partez d'une plante et sélectionnez ses composés documentés.</p>
+    </label>
+    <label class="wizard-card">
+      <h3><input type="radio" name="type_objet" value="molecule" required> ⚗️ Une molécule</h3>
+      <p>Étudiez une molécule seule : propriétés, cibles documentées.</p>
+    </label>
+    <label class="wizard-card">
+      <h3><input type="radio" name="type_objet" value="molecules" required> 🧪 Plusieurs molécules</h3>
+      <p>Comparez des molécules : similarités, propriétés, interactions.</p>
+    </label>
+    <label class="wizard-card">
+      <h3><input type="radio" name="type_objet" value="combinaison" required> 🔬 Une combinaison</h3>
+      <p>Préparez une étude de combinaison : screening structural en 12 points.</p>
+    </label>
+  </div>
+  <p><button type="submit">Continuer →</button></p>
+</form>
+{% endblock %}

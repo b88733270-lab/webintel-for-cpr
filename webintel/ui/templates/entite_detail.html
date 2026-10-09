@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Entité — {{ entity.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ entity.name }}</h1>
+  <p class="muted"><a href="/entites">← Retour aux entités</a></p>
+</div>
+
+<div class="layout-2col">
+  <div>
+    <div class="card">
+      <h2>Identité</h2>
+      <dl class="kv">
+        <dt>Type</dt><dd><span class="badge muted">{{ entity.entity_type }}</span></dd>
+        <dt>Clé stable</dt><dd><code class="mono">{{ entity.entity_key }}</code></dd>
+        <dt>Première vue</dt><dd>{{ entity.first_seen|date_courte }}</dd>
+        <dt>Dernière vue</dt><dd>{{ entity.last_seen|date_courte }}</dd>
+        <dt>Sources</dt><dd>{% for s in entity.sources or [] %}<a href="{{ s }}">{{ s | truncate(70) }}</a><br>{% else %}—{% endfor %}</dd>
+      </dl>
+    </div>
+
+    <div class="card">
+      <h2>Ajouter aux favoris</h2>
+      <form class="inline" method="post" action="/collections/favoris/ajouter">
+        <input type="hidden" name="type_objet" value="entite">
+        <input type="hidden" name="reference" value="{{ entity.id }}">
+        <div class="field"><label for="fav-titre">Titre</label>
+          <input type="text" id="fav-titre" name="titre" value="{{ entity.name }}"></div>
+        <div class="field"><label for="fav-note">Note</label>
+          <input type="text" id="fav-note" name="note" placeholder="Note personnelle (optionnel)"></div>
+        <button type="submit" class="btn btn-sm">⭐ Ajouter aux favoris</button>
+      </form>
+      <p class="muted"><a href="/collections">Voir mes collections et favoris</a></p>
+    </div>
+
+    <div class="card">
+      <h2>Données d'identité</h2>
+      <p class="muted">Attributs d'identité/synthèse uniquement — les valeurs volatiles
+      (prix, disponibilité, note…) vivent dans les observations par source ci-contre.</p>
+      <pre class="code">{{ entity.data | tojson(indent=2) }}</pre>
+    </div>
+
+    <div class="card">
+      <h2>Historique des changements ({{ observations | length }})</h2>
+      {% if observations %}
+      <ul class="timeline">
+        {% for o in observations %}
+        <li><span class="tl-date">{{ o.observed_at|date_courte }}</span><br>
+          <code>{{ o.field }}</code> : {{ (o.old_value or {}).value }} → {{ (o.new_value or {}).value }}
+          <span class="muted">({{ o.source_domain or "—" }})</span></li>
+        {% endfor %}
+      </ul>
+      <div class="table-wrap">
+      <table class="responsive-cards"><thead><tr><th>Date</th><th>Champ</th><th>Avant</th><th>Après</th><th>Source</th></tr></thead>
+        <tbody>
+        {% for o in observations %}
+        <tr><td data-label="Date" class="muted">{{ o.observed_at|date_courte }}</td><td data-label="Champ"><code>{{ o.field }}</code></td>
+            <td data-label="Avant">{{ (o.old_value or {}).value }}</td><td data-label="Après">{{ (o.new_value or {}).value }}</td>
+            <td data-label="Source" class="muted">{{ o.source_domain or "—" }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <h3>Aucun changement enregistré</h3>
+        <p class="muted">Aucun changement enregistré pour cette entité. Ré-analysez
+        sa page source pour détecter une évolution.</p>
+        <p><a class="btn secondary" href="/analyser">Analyser une URL</a></p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>Observations par source ({{ observations_by_source | length }} source(s))</h2>
+      {% if observations_by_source %}
+        {% for host, obs in observations_by_source.items() %}
+        <h3>{{ source_names.get(obs[0].source_id) or host }} <span class="muted">({{ host }})</span></h3>
+        <div class="table-wrap">
+        <table class="responsive-cards"><thead><tr><th>Champ</th><th>Valeur</th><th>Observée le</th></tr></thead>
+          <tbody>
+          {% for o in obs %}
+          <tr><td data-label="Champ"><code>{{ o.field }}</code></td>
+              <td data-label="Valeur">{{ o.value | tojson }}</td>
+              <td data-label="Observée le" class="muted">{{ o.observed_at|date_courte }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty-state">
+        <h3>Aucune observation par source</h3>
+        <p class="muted">Aucune observation par source pour cette entité pour le moment.</p>
+      </div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <h2>Relations et sources</h2>
+      <p class="muted">Chaque valeur ci-dessus reste rattachée à sa source et à
+      sa date d'observation. Aucune valeur globale n'écrase les observations
+      par source.</p>
+      <p><a class="btn secondary btn-sm" href="/evenements">Voir les événements liés</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

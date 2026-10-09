@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Entités{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Entités</h1>
+  <p class="muted">Projet : <strong>{{ project.name }}</strong> — personnes,
+  organisations, produits et pages repérés lors des collectes, chacun avec
+  ses observations attribuées par source.</p>
+</div>
+
+{% if error %}<div class="alert-error" role="alert">{{ error }}
+  <p style="margin:.5rem 0 0;"><a class="btn btn-sm secondary" href="/entites">Réessayer</a></p></div>{% endif %}
+
+<div class="card">
+  <form class="inline" method="get" action="/entites">
+    <div class="field"><label for="q">Recherche</label>
+      <input type="text" id="q" name="q" value="{{ q }}" placeholder="nom, marque, mot-clé…"></div>
+    <div class="field"><label for="type">Type</label>
+      <select id="type" name="type">
+        <option value="">Tous</option>
+        <option value="product" {% if type == "product" %}selected{% endif %}>Produit</option>
+        <option value="article" {% if type == "article" %}selected{% endif %}>Article</option>
+        <option value="company" {% if type == "company" %}selected{% endif %}>Entreprise</option>
+        <option value="webpage" {% if type == "webpage" %}selected{% endif %}>Page web</option>
+      </select></div>
+    <button type="submit">Filtrer</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>{{ results | length }} entité(s)</h2>
+  {% if results %}
+  <div class="table-wrap">
+  <table class="responsive-cards"><thead><tr><th>Nom</th><th>Type</th><th>Prix (par source)</th><th>Domaine</th><th>Dernière vue</th></tr></thead>
+    <tbody>
+    {% for e in results %}
+    <tr><td data-label="Nom"><a href="/entites/{{ e.id }}">{{ e.name | truncate(60) }}</a></td>
+        <td data-label="Type"><span class="badge muted">{{ e.entity_type }}</span></td>
+        <td data-label="Prix (par source)">{% if e.prices %}{{ e.prices[0]|afficher_valeur }}{% if e.prices | length > 1 %} <span class="muted">({{ e.prices | length }} sources)</span>{% endif %}{% else %}—{% endif %}</td>
+        <td data-label="Domaine" class="muted">{{ e.domain or "—" }}</td>
+        <td data-label="Dernière vue" class="muted">{{ e.last_seen|date_courte }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-ico" aria-hidden="true">◆</div>
+    <h3>Aucune entité</h3>
+    <p class="muted">Aucune entité ne correspond à ces filtres. Analysez une URL
+    pour en créer, ou réinitialisez la recherche.</p>
+    <p><a class="btn" href="/analyser">Analyser une URL</a>
+       <a class="btn secondary" href="/entites">Réinitialiser</a></p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

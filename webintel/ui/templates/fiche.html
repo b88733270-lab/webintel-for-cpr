@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Fiche — {{ fiche.title or fiche.final_url }}{% endblock %}
+{% block content %}
+<h1>Fiche intelligence</h1>
+<p class="muted"><a href="{{ fiche.final_url }}">{{ fiche.final_url }}</a></p>
+
+<div class="card">
+  <h2>Identité</h2>
+  <dl class="kv">
+    <dt>Titre</dt><dd>{{ fiche.title or "—" }}</dd>
+    <dt>Description</dt><dd>{{ fiche.description or "—" }}</dd>
+    <dt>URL finale</dt><dd>{{ fiche.final_url }}</dd>
+    <dt>Statut HTTP</dt><dd><span class="badge {% if fiche.status_code == 200 %}ok{% elif fiche.status_code >= 400 %}bad{% else %}warn{% endif %}">{{ fiche.status_code }}</span></dd>
+    <dt>Durée de collecte</dt><dd>{{ fiche.duration_ms }} ms</dd>
+    <dt>Mots</dt><dd>{{ fiche.word_count }}</dd>
+    <dt>Rendu JavaScript requis</dt><dd>{{ "oui (v2 : navigateur)" if fiche.needs_js else "non" }}</dd>
+    <dt>Snapshot</dt><dd>n° {{ fiche.snapshot_id }}{% if fiche.previous_snapshot_id %} (précédent : n° {{ fiche.previous_snapshot_id }}){% endif %}</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h2>Type de page</h2>
+  <p><span class="badge">{{ fiche.page_type }}</span>
+     <span class="muted">confiance : {{ "%.0f"|format(fiche.page_type_score * 100) }} %</span></p>
+</div>
+
+<div class="card">
+  <h2>Qualité des données</h2>
+  <p>Complétude : <strong>{{ fiche.quality.completeness_score }} %</strong></p>
+  {% if fiche.quality.missing_fields %}
+  <p class="muted">Champs manquants : {{ fiche.quality.missing_fields | join(", ") }}</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Entités ({{ fiche.entities | length }})</h2>
+  {% for e in fiche.entities %}
+  <details {% if loop.first %}open{% endif %}>
+    <summary><span class="badge muted">{{ e.entity_type }}</span> {{ e.name }}</summary>
+    <p class="muted">Clé stable : <code>{{ e.entity_key }}</code> — <a href="/entites/{{ e.id }}">voir l'historique</a></p>
+    <pre class="code">{{ e.data | tojson(indent=2) }}</pre>
+  </details>
+  {% else %}
+  <p class="muted">Aucune entité extraite.</p>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <h2>Prix ({{ fiche.prices | length }})</h2>
+  {% if fiche.prices %}
+  <table><tr><th>Montant</th><th>Devise</th><th>Source</th></tr>
+    {% for p in fiche.prices %}
+    <tr><td><strong>{{ {"amount": p.amount}|afficher_valeur }}</strong></td><td>{{ p.currency or "—" }}</td><td class="muted">{{ p.source }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Aucun prix détecté.</p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>Contacts</h2>
+  {% set emails = fiche.contacts.emails or [] %}{% set phones = fiche.contacts.phones or [] %}{% set socials = fiche.contacts.socials or [] %}
+  {% if emails or phones or socials %}
+  <dl class="kv">
+    {% if emails %}<dt>Emails</dt><dd>{{ emails | join(", ") }}</dd>{% endif %}
+    {% if phones %}<dt>Téléphones</dt><dd>{{ phones | join(", ") }}</dd>{% endif %}
+    {% if socials %}<dt>Réseaux sociaux</dt><dd>{% for s in socials %}<a href="{{ s.url }}">{{ s.network }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</dd>{% endif %}
+  </dl>
+  {% else %}<p class="muted">Aucun contact détecté.</p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>Technologies ({{ fiche.technologies | length }})</h2>
+  {% if fiche.technologies %}
+  <p>{% for t in fiche.technologies %}<span class="badge muted" title="{{ t.evidence }}">{{ t.technology }}</span> {% endfor %}</p>
+  {% else %}<p class="muted">Aucune technologie identifiée.</p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>SEO</h2>
+  {% set seo = fiche.seo or {} %}
+  <p>Score : <strong>{{ seo.score if seo.score is not none else "—" }}/100</strong></p>
+  {% set issues = seo.issues or [] %}
+  {% if issues %}
+  <table><tr><th>Sévérité</th><th>Problème</th><th>Recommandation</th></tr>
+    {% for i in issues %}
+    <tr><td><span class="badge {% if i.severity == 'error' %}bad{% elif i.severity == 'warning' %}warn{% else %}muted{% endif %}">{{ i.severity }}</span></td>
+        <td>{{ i.message }} <span class="muted">({{ i.code }})</span></td><td>{{ i.recommandation }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">Aucun problème détecté.</p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>Santé de la page</h2>
+  {% set health = fiche.health or {} %}
+  <p>Score global : <strong>{{ health.overall if health.overall is not none else "—" }}/100</strong></p>
+  {% set axes = health.axes or {} %}
+  {% if axes %}
+  <table><tr><th>Axe</th><th>Score</th></tr>
+    {% for name, score in axes.items() %}<tr><td>{{ name }}</td><td>{{ score }}</td></tr>{% endfor %}
+  </table>
+  {% endif %}
+  <details><summary>Facteurs détaillés</summary>
+    <table><tr><th>Facteur</th><th>Score</th><th>Poids</th><th>Preuve</th><th>Recommandation</th></tr>
+    {% for f in health.factors or [] %}
+    <tr><td>{{ f.name }}</td><td>{{ f.score }}</td><td>{{ f.weight }}</td><td class="muted">{{ f.evidence }}</td><td>{{ f.recommendation }}</td></tr>
+    {% endfor %}
+    </table>
+  </details>
+</div>
+
+<div class="card">
+  <h2>Données structurées</h2>
+  {% set ss = fiche.structured_summary or {} %}
+  <dl class="kv">
+    <dt>Types JSON-LD</dt><dd>{{ (ss.types_jsonld or []) | join(", ") or "—" }}</dd>
+    <dt>Objets JSON-LD</dt><dd>{{ ss.nb_jsonld }}</dd>
+    <dt>Éléments microdata</dt><dd>{{ ss.nb_microdata }}</dd>
+    <dt>OpenGraph</dt><dd>{{ "présent" if ss.opengraph_present else "absent" }}</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h2>Liens ({{ fiche.links | length }}) &amp; images ({{ fiche.images | length }})</h2>
+  <details><summary>Voir les liens ({{ fiche.links | length }})</summary>
+    <table><tr><th>URL</th><th>Texte</th></tr>
+    {% for l in fiche.links[:50] %}<tr><td><a href="{{ l.url }}">{{ l.url | truncate(80) }}</a></td><td class="muted">{{ l.text | truncate(60) if l.text }}</td></tr>{% endfor %}
+    </table>
+  </details>
+  <details><summary>Voir les images ({{ fiche.images | length }})</summary>
+    <table><tr><th>URL</th><th>Alt</th></tr>
+    {% for i in fiche.images[:30] %}<tr><td><a href="{{ i.url }}">{{ i.url | truncate(80) }}</a></td><td class="muted">{{ i.alt | truncate(60) if i.alt }}</td></tr>{% endfor %}
+    </table>
+  </details>
+</div>
+
+{% if fiche.diff and fiche.diff.changes %}
+<div class="card">
+  <h2>Changements depuis le snapshot n° {{ fiche.previous_snapshot_id }}</h2>
+  <p>Niveau : <span class="badge {% if fiche.diff.level == 'major' %}bad{% elif fiche.diff.level == 'minor' %}warn{% else %}muted{% endif %}">{{ fiche.diff.level }}</span>
+     <span class="muted">{{ fiche.diff.summary_fr }}</span></p>
+  <table><tr><th>Champ</th><th>Avant</th><th>Après</th></tr>
+    {% for c in fiche.diff.changes %}
+    <tr><td><code>{{ c.field }}</code></td><td>{{ c.before }}</td><td>{{ c.after }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if fiche.events %}
+<div class="card">
+  <h2>Événements détectés ({{ fiche.events | length }})</h2>
+  <table><tr><th>Type</th><th>Importance</th><th>Détail</th></tr>
+    {% for ev in fiche.events %}
+    <tr><td><span class="badge">{{ ev.type }}</span></td>
+        <td><span class="badge {{ ev.importance | badge_importance }}">{{ ev.importance }}</span></td>
+        <td class="muted">{{ (ev.evidence or {}).diff_summary }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Exportation</h2>
+  <p class="muted">Téléchargez les entités du projet au format de votre choix :</p>
+  <form class="inline" method="post" action="/exports">
+    <input type="hidden" name="kind" value="entities">
+    <div class="field"><label for="format">Format</label>
+      <select id="format" name="format"><option value="csv">CSV</option><option value="json">JSON</option><option value="xlsx">XLSX</option></select></div>
+    <button type="submit">Exporter les entités</button>
+  </form>
+</div>
+{% endblock %}

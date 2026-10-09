@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Assistant d'étude — étape 5{% endblock %}
+{% block content %}
+<meta http-equiv="refresh" content="2;url=/etudes/{{ session_id }}/resultats">
+<h1>Assistant de création d'étude</h1>
+{% include "_barre_progression.html" %}
+
+<h2>Étape 5 — Lancement</h2>
+<div class="card">
+  <p>⏳ <strong>Analyses en cours…</strong></p>
+  <p class="muted">Les moteurs scientifiques calculent vos résultats.
+  Vous allez être redirigé automatiquement vers la page de résultats.</p>
+  <p><a href="/etudes/{{ session_id }}/resultats" class="btn">Voir les résultats →</a></p>
+</div>
+{% endblock %}

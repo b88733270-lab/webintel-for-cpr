@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Outils scientifiques{% endblock %}
+{% block content %}
+<h1>🧪 Outils scientifiques</h1>
+<p class="muted">
+  <strong>RDKit est installé par défaut</strong> avec WebIntel : la
+  chimoinformatique réelle (similarité structurelle, descripteurs
+  moléculaires, normalisation) est disponible dès l'installation
+  standard. Les autres outils ci-dessous (Meeko, AutoDock Vina,
+  PostgreSQL) restent optionnels selon vos besoins. Si un outil manque,
+  l'application indique explicitement ce qui n'est pas calculable —
+  <strong>aucune valeur n'est jamais inventée</strong>.
+</p>
+
+{% for outil in outils %}
+<div class="card">
+  <h2>{{ outil.nom }}</h2>
+  <p>
+    {% if outil.installe %}
+    <span class="badge" style="background-color:#1a7f37;color:#fff;border:none;">🟢 Installé</span>
+    {% else %}
+    <span class="badge" style="background-color:#9a6700;color:#fff;border:none;">🟠 Non installé</span>
+    {% endif %}
+    &nbsp;<span class="muted">Version : {{ outil.version or "—" }}</span>
+  </p>
+  <p><strong>Fonction :</strong> {{ outil.fonction }}</p>
+  <p><strong>Pourquoi c'est nécessaire :</strong> {{ outil.pourquoi }}</p>
+  <p><strong>Licence :</strong> {{ outil.licence }}</p>
+  {% if outil.installe %}
+    {% if outil.note_config %}
+    <p class="muted">🔧 <strong>[Configurer]</strong> — {{ outil.note_config }}</p>
+    {% else %}
+    <p class="muted">✅ Opérationnel — aucune action requise.</p>
+    {% endif %}
+  {% else %}
+    <p><strong>[Installer]</strong> — {{ outil.note_install }}</p>
+    <pre><code>{{ outil.commande }}</code></pre>
+    <p class="muted">Si l'installation automatique est impossible, transmettez simplement
+    la commande ci-dessus à votre informaticien.</p>
+  {% endif %}
+  {% if outil.id == "vina" %}
+    {% include "_docking_statut.html" %}
+  {% endif %}
+</div>
+{% endfor %}
+
+<p><a href="/parametres">← Retour aux paramètres</a></p>
+{% endblock %}

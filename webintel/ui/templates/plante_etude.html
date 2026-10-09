@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}{% if etat == 'fiche' %}{{ plante.scientific_name }}{% else %}Étudier une plante{% endif %}{% endblock %}
+{% block content %}
+<h1>🌿 Étudier une plante</h1>
+
+<div class="card">
+  <form method="get" action="/plante-etude">
+    <label for="nom-plante"><strong>Nom de la plante</strong></label><br>
+    <input id="nom-plante" type="search" name="q" size="48" value="{{ q|e }}"
+           placeholder="Nom scientifique (Moringa oleifera) ou nom local…">
+    <button type="submit">Afficher la fiche</button>
+  </form>
+</div>
+
+{% if erreur %}
+<div class="alert-error"><strong>Erreur.</strong> {{ erreur }}</div>
+{% endif %}
+
+{% if etat == 'saisie' %}
+<p class="muted">Saisissez ci-dessus le nom scientifique ou le nom local d'une plante pour afficher sa fiche structurée.</p>
+
+{% elif etat == 'choix' %}
+<div class="card">
+  <h2>Plusieurs plantes correspondent à « {{ q|e }} »</h2>
+  <p class="muted">Précisez votre choix&nbsp;:</p>
+  <ul>
+    {% for p in plantes %}
+    <li><a href="/plante-etude?q={{ p.scientific_name|urlencode }}"><em>{{ p.scientific_name }}</em></a>
+      {% if p.family %}<span class="muted">({{ p.family }})</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+</div>
+
+{% elif etat == 'introuvable' %}
+<div class="card">
+  <h2>Rechercher en ligne ?</h2>
+  <p class="muted">Aucune fiche locale pour « {{ q|e }} ». Vous pouvez vérifier ce nom scientifique chez GBIF :
+  l'aperçu s'affiche avant import, avec sa source et sa licence, et vous décidez ensuite de l'importer.</p>
+  <p><a class="badge" href="/recherche-en-ligne?q={{ q|urlencode }}&amp;source=gbif" style="text-decoration:none;">🌐 Rechercher en ligne (GBIF) pour « {{ q|e }} »</a>
+  &nbsp;<a href="/recherche-en-ligne?q={{ q|urlencode }}">Toutes les sources en ligne →</a></p>
+</div>
+<div class="card">
+  <h2>Plante introuvable : « {{ q|e }} »</h2>
+  <p class="muted">Aucune fiche ne correspond en base. Vous pouvez créer la fiche maintenant
+  (formulaire simple — aucune donnée technique ni JSON n'est demandée). La fiche sera
+  enregistrée comme <strong>donnée saisie manuellement</strong>, avec sa source.</p>
+  <form method="post" action="/plante-etude/creer">
+    <div class="kv">
+      <label for="f-nom">Nom scientifique *</label>
+      <input id="f-nom" type="text" name="nom_scientifique" size="48" value="{{ q|e }}" required>
+      <label for="f-famille">Famille</label>
+      <input id="f-famille" type="text" name="famille" size="48">
+      <label for="f-genre">Genre</label>
+      <input id="f-genre" type="text" name="genre" size="48">
+      <label for="f-espece">Espèce</label>
+      <input id="f-espece" type="text" name="espece" size="48">
+      <label for="f-syn">Synonymes (séparés par « ; »)</label>
+      <input id="f-syn" type="text" name="synonymes" size="48">
+      <label for="f-langue">Langue des noms locaux</label>
+      <input id="f-langue" type="text" name="langue" size="48" placeholder="ex. français, wolof…">
+      <label for="f-noms">Noms locaux (séparés par des virgules)</label>
+      <input id="f-noms" type="text" name="noms_locaux" size="48">
+      <label for="f-desc">Description</label>
+      <textarea id="f-desc" name="description" rows="3" cols="48"></textarea>
+      <label for="f-source">Source * (publication, DOI, ouvrage…)</label>
+      <input id="f-source" type="text" name="source" size="48" required
+             placeholder="D'où vient cette information ?">
+    </div>
+    <p><button type="submit">Créer la fiche</button></p>
+    <p class="muted">* champs obligatoires. La source est enregistrée en provenance de la fiche.</p>
+  </form>
+</div>
+
+{% elif etat == 'fiche' %}
+{# Badge de preuve dynamique : reflète le vrai niveau de la donnée ;
+   section vide = aucun badge, jamais un niveau prétendu. #}
+{% macro badge_section(badge) -%}
+{%- if badge %} <span class="badge badge-{{ badge.niveau }}">{{ badge.label }}</span>{% endif -%}
+{%- endmacro %}
+<h2><em>{{ plante.scientific_name }}</em></h2>
+<p class="muted">Fiche plante — niveaux de preuve visibles dans chaque section.
+  <a href="/plantes/{{ plante.id }}">Voir la fiche scientifique complète (9 sections) →</a></p>
+
+<div class="card">
+  <h2>🪪 IDENTITÉ{{ badge_section(fiche.badges.identite) }}</h2>
+  <div class="kv">
+    <span class="muted">Nom scientifique</span><span><em>{{ plante.scientific_name }}</em></span>
+    <span class="muted">Famille</span><span>{{ plante.family or "—" }}</span>
+    <span class="muted">Genre</span><span>{{ plante.genus or "—" }}</span>
+    <span class="muted">Espèce</span><span>{{ plante.species or "—" }}</span>
+    <span class="muted">Synonymes</span><span>{{ plante.synonyms|join("; ") or "—" }}</span>
+    <span class="muted">Noms locaux</span>
+    <span>{% if plante.vernacular_names %}{% for langue, noms in plante.vernacular_names.items() %}{{ langue }} : {{ noms|join(", ") }}{% if not loop.last %}; {% endif %}{% endfor %}{% else %}—{% endif %}</span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🌱 BOTANIQUE{{ badge_section(fiche.badges.botanique) }}</h2>
+  <div class="kv">
+    <span class="muted">Description</span><span>{{ plante.description or "Pas de donnée" }}</span>
+    <span class="muted">Parties utilisées</span><span>{{ plante.used_parts|join(", ") or "Pas de donnée" }}</span>
+    <span class="muted">Distribution</span><span>{{ plante.distribution or "Pas de donnée" }}</span>
+    <span class="muted">Habitat</span><span>{{ plante.habitat or "Pas de donnée" }}</span>
+    <span class="muted">Références botaniques</span><span>{{ plante.references_botaniques|join("; ") or "Pas de donnée" }}</span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>⚗️ PHYTOCHIMIE{{ badge_section(fiche.badges.phytochimie) }}</h2>
+  <p><strong>{{ fiche.nb_composes }}</strong> composé(s) associé(s) dans la base
+  — associations <em>rapportées dans la littérature</em>, jamais des certitudes.</p>
+  {% if fiche.composes %}
+  <ul>
+    {% for c in fiche.composes %}
+    <li><strong>{{ c.nom }}</strong>{% if c.partie %} <span class="muted">(partie : {{ c.partie }})</span>{% endif %}
+      {% if c.doi %} — <a href="https://doi.org/{{ c.doi }}" target="_blank" rel="noopener">DOI {{ c.doi }}</a>
+      {% elif c.publication %} — <span class="muted">{{ c.publication }}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% if fiche.nb_composes > 8 %}<p class="muted">… et {{ fiche.nb_composes - 8 }} autre(s).</p>{% endif %}
+  {% else %}
+  <p class="muted">Aucun composé associé enregistré pour cette plante.</p>
+  {% endif %}
+  <p><a class="badge" href="/plantes/{{ plante.id }}" style="text-decoration:none;">Voir les composés →</a></p>
+</div>
+
+<div class="card">
+  <h2>💊 PHARMACOLOGIE{{ badge_section(fiche.badges.pharmacologie) }}</h2>
+  <p class="muted">Activités <em>rapportées dans la littérature</em> (modèle et type d'étude précisés) — jamais présentées comme des preuves d'action.</p>
+  {% if fiche.activites %}
+  <ul>
+    {% for a in fiche.activites %}
+    <li><strong>{{ a.activity }}</strong>
+      {% if a.study_type %}<span class="muted">({{ a.study_type }}{% if a.study_model %} — {{ a.study_model }}{% endif %})</span>{% endif %}
+      {% if a.doi %} — <a href="https://doi.org/{{ a.doi }}" target="_blank" rel="noopener">DOI {{ a.doi }}</a>
+      {% elif a.reference %} — <span class="muted">{{ a.reference }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">Aucune activité rapportée enregistrée pour cette plante.</p>
+  {% endif %}
+  <p><a class="badge" href="/plantes/{{ plante.id }}" style="text-decoration:none;">Voir les études →</a></p>
+</div>
+
+<div class="card">
+  <h2>📚 PUBLICATIONS{{ badge_section(fiche.badges.publications) }}</h2>
+  {% if fiche.publications %}
+  <ul>
+    {% for pub in fiche.publications %}
+    <li>{{ pub.titre }}{% if pub.annee %} <span class="muted">({{ pub.annee }})</span>{% endif %}
+      {% if pub.doi %} — <a href="https://doi.org/{{ pub.doi }}" target="_blank" rel="noopener">DOI {{ pub.doi }}</a>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">Aucune publication citée pour cette plante.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>⚠️ SÉCURITÉ</h2>
+  <p class="muted">Aucune donnée de sécurité disponible dans cette vue simplifiée —
+  aucun niveau de preuve n'est donc affiché. Consultez la <a href="/plantes/{{ plante.id }}">fiche scientifique complète</a>
+  et la littérature avant toute interprétation — l'absence de donnée ne signifie jamais l'absence de risque.</p>
+</div>
+
+<div class="card">
+  <h2>🔬 SIMULATIONS{{ badge_section(fiche.badges.simulations) }}</h2>
+  <p class="muted">Études déjà réalisées impliquant cette plante. Rappel : une simulation produit un
+  <strong>résultat informatique</strong> / une <strong>hypothèse</strong>, jamais une preuve.</p>
+  {% if fiche.etudes or fiche.simulations %}
+  <ul>
+    {% for e in fiche.etudes %}
+    <li><a href="/combinaisons/{{ e.id }}">Étude de combinaison « {{ e.nom }} »</a>
+      <span class="muted">— {{ e.created_at|date_courte if e.created_at else "date inconnue" }} — statut : {{ e.statut }}</span>
+      <span class="badge badge-prediction">Prédiction</span></li>
+    {% endfor %}
+    {% for s in fiche.simulations %}
+    <li><a href="/simulations/{{ s.id }}/rapport">Simulation « {{ s.name }} »</a>
+      <span class="muted">— {{ s.run_at|date_courte if s.run_at else "date inconnue" }}</span>
+      <span class="badge badge-prediction">Prédiction</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">Aucune étude ni simulation enregistrée pour cette plante.</p>
+  {% endif %}
+  <p><a class="badge" href="/etudes/nouvelle" style="text-decoration:none;">+ Créer une étude</a></p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Exports{% endblock %}
+
+{% block content %}
+<h1>Exports</h1>
+<p class="muted">Projet : <strong>{{ project.name }}</strong> — téléchargez les données
+scientifiques. Chaque export porte son niveau de donnée et sa source principale.</p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+{% if message %}<div class="alert-ok">{{ message }}</div>{% endif %}
+
+<div class="card">
+  <h2>Données de référence (publiques)</h2>
+  <p class="muted">Cochez les jeux à exporter, choisissez le format, puis téléchargez
+  la sélection en un seul ZIP.</p>
+  <form method="post" action="/export/lot">
+    <p>
+      <label><input type="checkbox" name="jeux" value="plantes" checked> Plantes</label><br>
+      <label><input type="checkbox" name="jeux" value="composes" checked> Composés</label><br>
+      <label><input type="checkbox" name="jeux" value="evidences" checked> Preuves (evidences)</label>
+    </p>
+    <p>
+      <label for="format"><strong>Format</strong> :</label>
+      <select id="format" name="format">
+        <option value="csv" selected>CSV</option>
+        <option value="json">JSON</option>
+      </select>
+    </p>
+    <p><button type="submit">Télécharger la sélection (ZIP)</button></p>
+  </form>
+  <p class="muted">Téléchargements directs :
+    <a href="/api/science/export/plantes?format=csv">Plantes (CSV)</a> ·
+    <a href="/api/science/export/plantes?format=json">Plantes (JSON)</a> ·
+    <a href="/api/science/export/composes?format=csv">Composés (CSV)</a> ·
+    <a href="/api/science/export/composes?format=json">Composés (JSON)</a> ·
+    <a href="/api/science/export/evidences?format=csv">Preuves (CSV)</a> ·
+    <a href="/api/science/export/evidences?format=json">Preuves (JSON)</a>
+  </p>
+</div>
+
+<div class="card">
+  <h2>Fiche plante</h2>
+  <p class="muted">Fiche complète d'une plante : vrai PDF, ou HTML imprimable.</p>
+  <form method="post" action="/export/fiche">
+    <p>
+      <label for="plant_id"><strong>N° de la plante</strong> :</label>
+      <input type="number" id="plant_id" name="plant_id" min="1" required
+             placeholder="ex. 1" style="width:100px;">
+    </p>
+    <p>
+      <label for="format_fiche"><strong>Format</strong> :</label>
+      <select id="format_fiche" name="format">
+        <option value="pdf" selected>PDF</option>
+        <option value="html">HTML imprimable</option>
+      </select>
+    </p>
+    <p><button type="submit">Télécharger la fiche</button></p>
+  </form>
+</div>
+
+<div class="card" style="border:2px solid #9a6700;">
+  <h2>Dossier de recherche (ZIP)</h2>
+  <p class="muted">Fiches JSON+HTML par plante du projet, bibliographie (texte + BibTeX),
+  rapports de simulation, journal du projet, MANIFEST.json et README.</p>
+  <form method="post" action="/export/dossier">
+    <p>
+      <label><input type="checkbox" name="inclure_simulations" value="oui" checked>
+        Inclure les rapports de simulation</label><br>
+      <span class="muted">Chaque simulation exportée porte l'avertissement
+        « Simulation — à confirmer expérimentalement ».</span>
+    </p>
+    <p>
+      <label><input type="checkbox" name="inclure_prive" value="oui">
+        <strong>Inclure les données privées du laboratoire</strong></label><br>
+      <span class="alert-error" style="display:inline-block;margin-top:4px;">
+        ⚠️ Attention : cocher cette case exporte les observations, notes et
+        simulations <strong>privées</strong> du projet. Ne partagez ce fichier
+        qu'en connaissance de cause.</span>
+    </p>
+    <p><button type="submit">Télécharger le dossier (ZIP)</button></p>
+  </form>
+</div>
+
+<p><a href="/import">← Aller à l'import</a></p>
+{% endblock %}

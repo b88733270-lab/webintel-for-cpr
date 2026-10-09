@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{{ note.titre or "Note" }} — Journal{% endblock %}
+{% from "_macros.html" import badge_niveau %}
+{% block content %}
+<p><a href="/journal">← Retour au journal</a></p>
+<h1>{{ note.titre or "(sans titre)" }}</h1>
+<p class="muted">Auteur : <strong>{{ note.auteur or "—" }}</strong> ·
+Version <strong>{{ note.version_courante }}</strong> ·
+Créée le {{ note.created_at or "—" }} · Modifiée le {{ note.updated_at or "—" }}
+{{ badge_niveau(note.data_level) }}
+{% if publie %}<span class="badge ok">Publiée</span>{% else %}<span class="badge muted">Privée</span>{% endif %}</p>
+
+{% if erreur %}<div class="alert-error">{{ erreur }}</div>{% endif %}
+{% if message %}<div class="alert-ok">{{ message }}</div>{% endif %}
+
+{% if trace_publication %}
+<div class="card">
+  <h2>Traçabilité de la publication</h2>
+  <p>Cette note a été <strong>publiée le {{ trace_publication.publie_le }}</strong>
+  {% if trace_publication.publie_par %}par <strong>{{ trace_publication.publie_par }}</strong>{% endif %}
+  depuis ce projet.</p>
+  {% if trace_publication.commentaire %}<p class="muted">Commentaire : {{ trace_publication.commentaire }}</p>{% endif %}
+  <p class="muted">Une donnée publiée est en lecture seule : elle ne peut plus
+  être modifiée.</p>
+</div>
+{% endif %}
+
+<div class="card lab-frame">
+  <h2>Contenu (version {{ note.version_courante }})</h2>
+  <p style="white-space: pre-wrap;">{{ note.contenu or "—" }}</p>
+</div>
+
+{% if not publie %}
+<h2>Modifier la note</h2>
+<div class="card">
+  <p class="avertissement"><strong>L'édition crée une nouvelle version.</strong>
+  L'ancien contenu est conservé dans l'historique ci-dessous — une note n'est
+  jamais modifiée en silence.</p>
+  <form method="post" action="/journal/{{ note.id }}">
+    <div class="field"><label for="titre">Titre</label>
+      <input type="text" id="titre" name="titre" value="{{ note.titre }}"></div>
+    <div class="field" style="margin-top:0.5rem;"><label for="contenu">Contenu</label>
+      <textarea id="contenu" name="contenu" rows="6" cols="70">{{ note.contenu or "" }}</textarea></div>
+    <button type="submit" style="margin-top:0.6rem;">Enregistrer une nouvelle version</button>
+  </form>
+</div>
+
+<h2>Publier la note</h2>
+<div class="card">
+  <p class="avertissement"><strong>Attention :</strong> publier rend la note
+  publique et en lecture seule. Cette action est explicite et tracée — elle ne
+  peut pas être annulée depuis cette page.</p>
+  <form method="post" action="/laboratoire/publier">
+    <input type="hidden" name="item_type" value="note">
+    <input type="hidden" name="item_id" value="{{ note.id }}">
+    <div class="field"><label for="publie_par">Publié par (optionnel)</label>
+      <input type="text" id="publie_par" name="publie_par" placeholder="Votre nom"></div>
+    <p><label><input type="checkbox" name="confirmation" value="oui">
+    Je confirme la publication de cette note.</label></p>
+    <button type="submit" class="danger">Publier</button>
+  </form>
+</div>
+{% endif %}
+
+<h2 id="versions">Historique des versions</h2>
+<div class="card">
+  {% if versions %}
+  <table>
+    <tr><th>Version</th><th>Titre</th><th>Contenu (extrait)</th><th>Enregistrée le</th></tr>
+    {% for v in versions %}
+    <tr><td>v{{ v.version }}</td><td>{{ v.titre or "—" }}</td>
+      <td>{{ (v.contenu or "—")[:160] }}{% if v.contenu and v.contenu|length > 160 %}…{% endif %}</td>
+      <td class="muted">{{ v.cree_le or "—" }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="muted">Aucune version antérieure : la note n'a pas encore été modifiée.</p>
+  {% endif %}
+  <p class="muted">Version actuelle : <strong>v{{ note.version_courante }}</strong>
+  (affichée ci-dessus).</p>
+</div>
+{% endblock %}

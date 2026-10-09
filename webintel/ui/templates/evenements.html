@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Événements{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Événements</h1>
+  <p class="muted">Projet : <strong>{{ project.name }}</strong> — changements détectés par les analyses
+  et les moniteurs (baisses de prix, remises en stock, nouveautés…), chacun daté et rattaché à sa source.</p>
+</div>
+
+<div class="card">
+  {% if events %}
+  <ul class="timeline">
+    {% for ev in events %}
+    <li><span class="tl-date">{{ ev.created_at|date_courte }}</span>
+      <span class="badge">{{ ev.type }}</span>
+      <span class="badge {{ ev.importance | badge_importance }}">{{ ev.importance }}</span><br>
+      <span class="muted">{{ ev.url | truncate(60) }}
+      {% if ev.before is not none or ev.after is not none %}<br>{{ ev.before }} → {{ ev.after }}{% endif %}
+      <br>{{ (ev.evidence or {}).diff_summary }}</span></li>
+    {% endfor %}
+  </ul>
+  <div class="table-wrap">
+  <table class="responsive-cards"><thead><tr><th>Date</th><th>Type</th><th>Importance</th><th>Détail</th></tr></thead>
+    <tbody>
+    {% for ev in events %}
+    <tr><td data-label="Date" class="muted">{{ ev.created_at|date_courte }}</td>
+        <td data-label="Type"><span class="badge">{{ ev.type }}</span></td>
+        <td data-label="Importance"><span class="badge {{ ev.importance | badge_importance }}">{{ ev.importance }}</span></td>
+        <td data-label="Détail" class="muted">{{ ev.url | truncate(60) }}
+            {% if ev.before is not none or ev.after is not none %}<br>{{ ev.before }} → {{ ev.after }}{% endif %}
+            <br>{{ (ev.evidence or {}).diff_summary }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-ico" aria-hidden="true">⚡</div>
+    <h3>Aucun événement détecté</h3>
+    <p class="muted">Aucun événement détecté pour l'instant. Créez un moniteur
+    ou ré-analysez une URL déjà connue pour détecter un changement.</p>
+    <p><a class="btn" href="/moniteurs">Créer un moniteur</a>
+       <a class="btn secondary" href="/analyser">Analyser une URL</a></p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
