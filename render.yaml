@@ -1,0 +1,27 @@
+# WebIntel — déploiement gratuit (Render + Supabase)
+# Ce fichier permet un déploiement en 1 clic depuis le dépôt GitHub.
+# La base SQLite locale n'est PAS utilisée en production : Render a un disque
+# éphémère (données perdues à chaque redémarrage) -> PostgreSQL via Supabase.
+
+services:
+  - type: web
+    name: webintel
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn webintel.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_URL
+        # À renseigner à la main dans Render avec l'URL PostgreSQL de Supabase.
+        # Format : postgresql://postgres:[mot-de-passe]@db.[ref].supabase.co:5432/postgres
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: LOG_LEVEL
+        value: INFO
+      - key: ENABLE_SCHEDULER
+        # true = les moniteurs/crawls planifiés tournent aussi en ligne.
+        # Sur l'offre gratuite (mise en veille après 15 min), mettre false
+        # économise les ressources ; passer à true si besoin.
+        value: false
