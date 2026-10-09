@@ -1,0 +1,4 @@
+nom;formule;poids_moleculaire;smiles;inchi;inchikey;classe_chimique;synonymes;ids_externes
+Quercétine;C15H10O7;302.24;C1=CC(=C(C=C1C2=C(C(=O)C3=C(C=C(C=C3O2)O)O)O)O)O;InChI=1S/C15H10O7/c16-8-4-11(19)15-12(20)14(22-13(15)5-8)7-1-2-9(17)10(18)3-7/h1-5,16-19;REFJWTPEDVJJIY-UHFFFAOYSA-N;Flavonoïde;Quercetin;"{""pubchem"": ""5280343""}"
+Artémisinine;C15H22O5;282.33;C[C@@H]1CC[C@H]2[C@@H](C)C(=O)O[C@@H]3O[C@@]4(C)CC[C@@H]1[C@]32OO4;InChI=1S/C15H22O5/c1-8-4-5-11-9(2)12(16)17-13-15(11)10(8)6-7-14(3,18-13)19-20-15/h8-11,13H,4-7H2,1-3H3/t8-,9-,10+,11+,13-,14-,15-/m1/s1;BLUAFEHZUWYNDE-NNWCWBAJSA-N;Lactone sesquiterpénique;Artemisinin;"{""pubchem"": ""68827""}"
+Acide ascorbique;C6H8O6;176.12;C([C@@H]([C@@H]1C(=C(C(=O)O1)O)O)O)O;InChI=1S/C6H8O6/c7-1-2(8)5-3(9)4(10)6(11)12-5/h2,5,7-10H,1H2/t2-,5+/m0/s1;CIWBSHSKHKDKBQ-JLAZNSOCSA-N;Vitamine;Vitamine C;"{""pubchem"": ""54670067""}"
