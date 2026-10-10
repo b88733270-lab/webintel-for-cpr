@@ -1,5 +1,30 @@
 # Journal des versions — WebIntel
 
+## v3.1.0 — Recherche scientifique sans clé : 8 nouveaux providers (2026-10-10)
+
+- **8 providers scientifiques SANS CLÉ**, ajoutés après les 8 généralistes
+  dans le registre (ordre généraliste inchangé) :
+  - publications : **PubMed** (E-utilities NCBI : esearch + esummary),
+    **OpenAlex** (résumé reconstruit depuis `abstract_inverted_index`),
+    **Europe PMC**, **Crossref**, **Semantic Scholar** ;
+  - chimie : **PubChem** (PUG-REST : formule, masse, SMILES, nom IUPAC —
+    404 « composé inconnu » → liste vide, pas d'erreur), **ChEMBL**
+    (JSON demandé explicitement via `Accept: application/json`) ;
+  - biodiversité : **GBIF** (taxonomie : rang, famille, embranchement,
+    règne).
+- **Nouvel endpoint** `GET /api/web/recherche-scientifique`
+  (paramètres `q`, `limite`, `langue`) : n'interroge que les providers
+  déclarant la capacité `recherche_scientifique`, avec fallback
+  automatique comme la recherche généraliste.
+- Discipline inchangée : hôtes codés en dur (anti-SSRF),
+  `self._get_json()` uniquement, jamais de résultat inventé
+  (`ProviderErreur` typée en cas d'échec), messages en français,
+  extraits nettoyés et bornés à 500 caractères, statuts exposés sur
+  la page Paramètres via `statuts_providers()`.
+- 26 tests ajoutés (`tests/test_providers_scientifiques.py`) : succès /
+  erreur / requête vide par provider (MockTransport, zéro réseau réel)
+  + test registre (les 8 noms, capacités, filtrage par capacité).
+
 ## v3.0.7 — Correctif d'affichage : derniers `.strftime` inline (2026-10-09)
 
 - **4 écrans oubliés par l'audit v3.0.4** : `plante_etude.html`,

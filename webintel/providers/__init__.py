@@ -8,7 +8,12 @@ derrière une interface commune typée (``base.BaseProvider``) :
   RSS) ;
 - providers À CLÉ optionnels : Brave Search, Tavily, SerpApi, NewsAPI —
   sans clé, ils sont simplement sautés (statut ``non_configure``), jamais
-  une exception qui casse la recherche.
+  une exception qui casse la recherche ;
+- providers SCIENTIFIQUES sans clé (v3.1.0) : PubMed (E-utilities),
+  OpenAlex, Europe PMC, Crossref, Semantic Scholar (publications) ;
+  PubChem, ChEMBL (chimie) ; GBIF (biodiversité). Capacité
+  ``"recherche_scientifique"``, exposée par
+  ``GET /api/web/recherche-scientifique``.
 
 ``registre.rechercher_avec_fallback`` essaie les providers dans l'ordre,
 accumule et déduplique les résultats par URL normalisée, journalise

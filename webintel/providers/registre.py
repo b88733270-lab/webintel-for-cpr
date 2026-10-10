@@ -30,6 +30,16 @@ from webintel.providers.base import BaseProvider, ProviderErreur, ResultatProvid
 from webintel.providers.duckduckgo import DuckDuckGoProvider
 from webintel.providers.github import GitHubProvider
 from webintel.providers.rss_actualites import RssActualitesProvider
+from webintel.providers.scientifique import (
+    ChEMBLProvider,
+    CrossrefProvider,
+    EuropePmcProvider,
+    GbifProvider,
+    OpenAlexProvider,
+    PubChemProvider,
+    PubMedProvider,
+    SemanticScholarProvider,
+)
 from webintel.providers.wikipedia import WikipediaProvider
 
 logger = get_logger(__name__)
@@ -69,11 +79,14 @@ def construire_registre(
     *, transport: httpx.BaseTransport | None = None
 ) -> list[BaseProvider]:
     """Registre ordonné : à clé d'abord (souvent meilleurs, si configurés),
-    puis les providers sans clé toujours disponibles.
+    puis les providers généralistes sans clé, puis les providers
+    scientifiques sans clé (v3.1.0).
 
     L'ordre de repli : Brave → Tavily → SerpApi → Wikipedia →
-    DuckDuckGo → RSS actualités → NewsAPI → GitHub. Les providers non
-    configurés sont sautés à l'exécution (pas d'exception globale).
+    DuckDuckGo → RSS actualités → NewsAPI → GitHub → PubMed →
+    OpenAlex → Europe PMC → Crossref → Semantic Scholar → PubChem →
+    ChEMBL → GBIF. Les providers non configurés sont sautés à
+    l'exécution (pas d'exception globale).
     """
     return [
         BraveProvider(transport=transport),
@@ -84,6 +97,14 @@ def construire_registre(
         RssActualitesProvider(transport=transport),
         NewsApiProvider(transport=transport),
         GitHubProvider(transport=transport),
+        PubMedProvider(transport=transport),
+        OpenAlexProvider(transport=transport),
+        EuropePmcProvider(transport=transport),
+        CrossrefProvider(transport=transport),
+        SemanticScholarProvider(transport=transport),
+        PubChemProvider(transport=transport),
+        ChEMBLProvider(transport=transport),
+        GbifProvider(transport=transport),
     ]
 
 

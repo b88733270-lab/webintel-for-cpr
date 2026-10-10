@@ -4,4 +4,4 @@ Pipeline : SOURCE -> COLLECTION -> EXTRACTION -> NORMALISATION -> ENTITY
 -> OBSERVATION -> EVENT -> ANALYSIS -> ALERT -> WORKFLOW -> API/EXPORT.
 """
 
-__version__ = "3.0.7"
+__version__ = "3.1.0"

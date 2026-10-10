@@ -28,6 +28,19 @@ def recherche_web_endpoint(
     return rechercher_web(q, limite=limite, langue=langue)
 
 
+@router.get("/web/recherche-scientifique")
+def recherche_scientifique_endpoint(
+    q: str = Query(..., min_length=1, max_length=300, description="Requête de recherche scientifique"),
+    limite: int = Query(default=10, ge=1, le=50),
+    langue: str = Query(default="fr", pattern="^(fr|en)$"),
+    api_key=Depends(api_key_auth),
+) -> dict:
+    """Recherche scientifique SANS CLÉ (v3.1.0) : publications (PubMed,
+    OpenAlex, Europe PMC, Crossref, Semantic Scholar), chimie (PubChem,
+    ChEMBL), biodiversité (GBIF) — avec fallback automatique."""
+    return rechercher_web(q, limite=limite, langue=langue, capacite="recherche_scientifique")
+
+
 @router.get("/web/providers")
 def providers_endpoint(api_key=Depends(api_key_auth)) -> dict:
     """Statuts des providers (page Paramètres) — jamais de clé exposée."""
