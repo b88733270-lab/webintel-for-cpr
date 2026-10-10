@@ -10,10 +10,19 @@ Limites de l'offre gratuite : l'app s'endort après ~15 min sans visite
 2. **New project** → nomme-le `webintel`, choisis un mot de passe base de données
    (note-le), région la plus proche (Europe de l'Ouest).
 3. Attends la fin de la création (~2 min).
-4. Va dans **Project Settings → Database** → rubrique **Connection string** →
-   copie l'URI (mode **Session**, pas Transaction) :
-   `postgresql://postgres:[TON-MOT-DE-PASSE]@db.xxxxx.supabase.co:5432/postgres`
-   Remplace `[TON-MOT-DE-PASSE]` par ton mot de passe.
+4. Va dans **Project Settings → Database** → rubrique **Connection string**.
+   Dans le sélecteur de type, choisis **Session pooler** (surtout pas
+   « Direct connection » ni « Transaction ») → copie l'URI affichée.
+   Elle ressemble à :
+   `postgresql://postgres.[REF-PROJET]:[TON-MOT-DE-PASSE]@aws-0-xxxxx.pooler.supabase.com:5432/postgres`
+   Remplace `[TON-MOT-DE-PASSE]` par ton mot de passe (simple, sans `@`,
+   `#` ni `/`).
+   Pourquoi le pooler et pas l'URI directe ? L'hôte direct
+   (`db.xxxxx.supabase.co`) ne répond qu'en IPv6 et Render (offre gratuite)
+   ne parle qu'IPv4 : la connexion est impossible. Le pooler est en IPv4,
+   c'est lui qu'il faut pour Render. Note aussi que sur le pooler le nom
+   d'utilisateur est `postgres.[REF-PROJET]` (avec la référence du projet),
+   pas `postgres` seul.
 
 ## 2. Application (Render, gratuit)
 
@@ -46,5 +55,13 @@ Limites de l'offre gratuite : l'app s'endort après ~15 min sans visite
 - **L'app démarre mais n'affiche rien** : vérifie que `DATABASE_URL` est bien
   renseignée et que le mot de passe ne contient pas de caractère spécial
   non encodé (`@`, `#`, `/` → à remplacer par leur code `%40`, `%23`, `%2F`).
+- **« WebIntel ne peut pas démarrer : PostgreSQL est injoignable »** : dans
+  9 cas sur 10, `DATABASE_URL` pointe vers le mauvais hôte. Elle doit utiliser
+  le **pooler** (`....pooler.supabase.com`, utilisateur
+  `postgres.[ref-projet]`, étape 1.4 ci-dessus), jamais l'hôte direct
+  `db.xxxx.supabase.co` (IPv6 uniquement, injoignable depuis Render).
+  Si la cause mentionne « Tenant or user not found » : projet Supabase en
+  pause (1 clic pour réveiller) OU utilisateur incorrect sur le pooler
+  (doit être `postgres.[ref-projet]`, pas `postgres` seul).
 - **Erreur base de données** : dans Supabase, vérifie que le projet est bien
   « Active » (un projet en pause se réactive en 1 clic).

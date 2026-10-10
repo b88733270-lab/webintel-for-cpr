@@ -14,7 +14,11 @@ services:
         value: 3.11.9
       - key: DATABASE_URL
         # À renseigner à la main dans Render avec l'URL PostgreSQL de Supabase.
-        # Format : postgresql://postgres:[mot-de-passe]@db.[ref].supabase.co:5432/postgres
+        # IMPORTANT : utiliser le POOLER (mode Session), jamais l'URI directe.
+        # Format : postgresql://postgres.[ref]:[mot-de-passe]@aws-0-xxxxx.pooler.supabase.com:5432/postgres
+        # (l'hôte direct db.xxxxx.supabase.co est IPv6 uniquement, injoignable
+        # depuis Render qui ne parle qu'IPv4 ; sur le pooler, l'utilisateur
+        # est postgres.[ref], pas postgres seul)
         sync: false
       - key: SECRET_KEY
         generateValue: true
